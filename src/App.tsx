@@ -1,8 +1,8 @@
 import ReactJsonView from '@microlink/react-json-view'
-import { useDebounceCallback } from 'usehooks-ts'
-import { grammar, ohmGrammarString } from './ohm/semantic'
-import { useEffect, useReducer, useState } from 'react'
 import type { MatchResult } from 'ohm-js'
+import { useEffect, useReducer, useState } from 'react'
+import { useDebounceCallback } from 'usehooks-ts'
+import grammar from './assets/grammar.ohm-bundle'
 
 function App() {
   const [json, setJson] = useState<unknown>()
@@ -21,11 +21,6 @@ function App() {
 
   return (
     <>
-      <textarea
-        value={ohmGrammarString}
-        cols={80}
-        rows={10}
-      />
       <input
         type="checkbox"
         onChange={({ target: { checked } }) =>

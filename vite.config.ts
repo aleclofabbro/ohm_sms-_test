@@ -1,27 +1,22 @@
 import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
-import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vite.dev/config/
 export default defineConfig({
   build: {
     rollupOptions: {
-      external: [/\.test\.tsx?$/],
-      // external: ['@fontsource/roboto-condensed'],
+      external: [/\.test\.ts[x]?$/],
     },
   },
-  optimizeDeps: {
-    exclude: ["./public/entities/*"],
+  resolve:{
+    tsconfigPaths: true
   },
+  cacheDir:'./.vitecache',
   plugins: [
     react(),
-    babel({ presets: [reactCompilerPreset()] }),
-    tsconfigPaths(),
-    // checker({
-    //   typescript: {
-    //     tsconfigPath: './tsconfig.app.json',
-    //   },
-    // })
+    babel({ presets: [
+      reactCompilerPreset()
+    ] }),
   ],
 })

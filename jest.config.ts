@@ -1,8 +1,9 @@
+import type { JestConfigWithTsJest} from 'ts-jest'
 import { createDefaultPreset } from 'ts-jest'
 
 const tsJestTransformCfg = createDefaultPreset().transform
 
-export default {
+const jestConfig:JestConfigWithTsJest = {
   roots: ['./src'],
   preset: 'ts-jest',
   transform: {
@@ -15,4 +16,6 @@ export default {
     ],
   },
   testEnvironment: "node",
+  testPathIgnorePatterns: ['\\._\\.test\\.ts[x]?']
 };
+export default jestConfig;

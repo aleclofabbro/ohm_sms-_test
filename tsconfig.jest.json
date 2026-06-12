@@ -3,12 +3,11 @@
   "compilerOptions": {
     "composite": true,
     "types": ["jest", "node"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
   },
   "include": [
+    "src/**/*.ts",
     "src/**/*.test.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.ts",
-    "src/**/*.spec.tsx"
+    "src/**/*.test.tsx"
   ]
 }

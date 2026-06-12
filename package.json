@@ -20,7 +20,8 @@
     "ohm-js": "^17.5.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "usehooks-ts": "^3.1.1"
+    "usehooks-ts": "^3.1.1",
+    "vite": "^8.0.16"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -42,8 +43,6 @@
     "ts-jest": "^29.4.11",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12",
-    "vite-plugin-checker": "^0.14.1",
-    "vite-tsconfig-paths": "^6.1.1"
+    "vite-plugin-checker": "^0.14.1"
   }
 }
