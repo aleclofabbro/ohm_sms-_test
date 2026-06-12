@@ -1,6 +1,6 @@
 import ReactJsonView from '@microlink/react-json-view'
 import { useDebounceCallback } from 'usehooks-ts'
-import { grammar, ohmGrammarString } from './ohm'
+import { grammar, ohmGrammarString } from './ohm/semantic'
 import { useEffect, useReducer, useState } from 'react'
 import type { MatchResult } from 'ohm-js'
 
