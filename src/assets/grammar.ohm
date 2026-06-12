@@ -1,0 +1,36 @@
+CustomQueryLanguage {
+  Query = Target Statement+
+
+  Statement = SetOp
+            | AddOp
+            | AddSetOp
+            | RemoveOp
+            | NestedBlock
+
+  NestedBlock = Target Statement+ "UP"
+
+  Target = "ON" ident "(" NonemptyListOf<idRaw, ","> ")"
+
+  SetOp    = "SET" path ":" jsonMock
+  AddOp    = "ADD" ident jsonMock
+  AddSetOp = "ADDSET" ident jsonMock
+  RemoveOp = "REMOVE" ident "(" NonemptyListOf<idRaw, ","> ")"
+
+  // --- Regole Lessicali ---
+
+  path  = applySyntactic<NonemptyListOf<ident, ".">>
+  ident = letter (alnum | "_")*
+  
+  // idRaw supporta caratteri alfanumerici, trattini e underscore per flessibilità
+  idRaw = (alnum | "-" | "_")+
+
+  // Cattura tutto fino a fine riga senza consumare il newline (che verrà gestito da 'space')
+  jsonMock = (~"\n" any)*
+
+  // --- Gestione Spazi e Commenti ---
+  
+  space += comment
+  comment = "--" (~"\n" any)* -- sql
+          | "//" (~"\n" any)* -- jsLine
+          | "/*" (~"*/" any)* "*/"   -- jsBlock
+}

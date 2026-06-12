@@ -1,0 +1,40 @@
+SMSPlusDSL {
+  // A program is a sequence of ON blocks
+  Script = Statement+
+
+  Statement = OnBlock
+
+  // An ON block defines a context, an optional match, and nested contexts or mutations
+  OnBlock = "ON" identifier MatchClause? BlockItem*
+
+  BlockItem = OnBlock | Mutation
+
+  // MATCH filters
+  MatchClause = "MATCH" MatchExpr
+  MatchExpr = "ALL" | Condition
+
+  Condition = identifier Operator Value
+  Operator = "=" | "!=" | ">=" | "<=" | ">" | "<" | "IN"
+
+  // Context Mutations
+  Mutation = MutateOp identifier ("=" Value)?
+  MutateOp = "SET" | "ADD" | "REMOVE" | "REPLACE" | "UPSERT" | "PATCH"
+
+  // Value Types
+  Value = StringLiteral | NumberLiteral | ListLiteral
+
+  ListLiteral = "(" ListOf<Value, ","> ")"
+
+  // Lexical definitions for standard primitives22
+  
+  StringLiteral = "\"" (~"\"" any)* "\""
+  NumberLiteral = "-"? digit+ ("." digit+)?
+
+  // Dynamically injected identifiers from OpenAPI
+  identifier = letter alnum*
+  // identifier = letter+
+  //identifier = alnum+
+
+  // Ignore whitespace
+  space += "\\t" | " " | "\\n" | "\\r"
+}

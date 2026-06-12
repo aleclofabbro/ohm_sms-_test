@@ -1,0 +1,41 @@
+DomainQueryLanguage {
+  // A program is a sequence of ON blocks
+  Script = Statement+
+
+  Statement<target> = OnBlock<target>
+
+  // An ON block defines a context, an optional match, and nested contexts or mutations
+  OnBlock<target, idType> = "ON" target IdsMatch? MatchClause? BlockItem*
+
+  BlockItem<target, idType> = OnBlock<target, idType> | Mutation<target, idType>
+
+  // MATCH filters
+  idsMatch<idType> = "()" ListOf<idType, ","> ")"
+  MatchClause = "MATCH" MatchExpr
+  MatchExpr = "ALL" | Condition
+
+  Condition = target Operator Value
+  Operator = "=" | "!=" | ">=" | "<=" | ">" | "<" | "IN"
+
+  // Context Mutations
+  Mutation = MutateOp target ("=" Value)?
+  MutateOp = "SET" | "ADD" | "REMOVE" | "REPLACE" | "UPSERT" | "PATCH"
+
+  // Value Types
+  Value = StringLiteral | NumberLiteral | ListLiteral
+
+  ListLiteral = "(" ListOf<Value, ","> ")"
+
+  // Lexical definitions for standard primitives22
+  
+  StringLiteral = "\"" (~"\"" any)* "\""
+  NumberLiteral = "-"? digit+ ("." digit+)?
+
+  // Dynamically injected identifiers from OpenAPI
+  // identifier = letter alnum*
+  // identifier = letter+
+  //identifier = alnum+
+
+  // Ignore whitespace
+  space += "\\t" | " " | "\\n" | "\\r"
+}
