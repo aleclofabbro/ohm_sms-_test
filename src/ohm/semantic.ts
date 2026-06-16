@@ -1,7 +1,6 @@
 import { generateRecursiveArrayMap } from './generateRecursiveArrayMap' // La tua funzione precedente
 import grammar from '../assets/grammar.ohm-bundle'
 import type { AnyObject } from 'mingo/types'
-import { inspect } from 'util'
 
 // 1. Inizializzazione della grammatica (stringa fornita nel tuo file grammar.ohm)
 
@@ -15,119 +14,10 @@ const semantics = grammar.createSemantics()
  * i PipelineGeneratorArgs della tua funzione custom.
  */
 semantics.addOperation('eval(currentPath)', {
-//   Query(targetNode, statementsNode) {
-//     const targetInfo = targetNode.eval(this.args.currentPath)
-//     const entityName = targetInfo.name
-//     const targetIds = idsStringInt(targetInfo.ids)
-
-//     // Costruiamo il path per i figli (es: ['Order'])
-//     const childPath = [entityName]
-
-//     // Valutiamo tutte le istruzioni sottostanti e uniamo gli oggetti ritornati
-//     const stmts = statementsNode.children.map((c) => c.eval(childPath))
-//     const mutations = Object.assign({}, ...stmts)
-
-//     // Costruiamo la leafExpression (il caso foglia per il $set)
-//     const leafExpression = {
-//       $cond: {
-//         if: { $in: ['$$CURRENT_ITEM.id', targetIds] },
-//         then: mutations,
-//         else: {},
-//       },
-//     }
-
-//     // Chiamiamo la tua utility ricorsiva
-//     return generateRecursiveArrayMap({
-//       currentPath: [],
-//       nextPathSegment: [entityName],
-//       leafExpression,
-//     })
-//   },
-
-//   NestedBlock(targetNode, statementsNode, _up) {
-//     const targetInfo = targetNode.eval(this.args.currentPath)
-//     const subArrayName = targetInfo.name
-//     const targetIds = idsStringInt(targetInfo.ids)
-//     // Aggiungiamo il segmento corrente al path ricorsivo
-//     const childPath = [...this.args.currentPath, subArrayName]
-
-//     const stmts = statementsNode.children.map((c) => c.eval(childPath))
-//     const mutations = Object.assign({}, ...stmts)
-
-//     const leafExpression = {
-//       $cond: {
-//         if: { $in: ['$$CURRENT_ITEM.id', targetIds] },
-//         then: mutations,
-//         else: {},
-//       },
-//     }
-
-//     // Ricorsione per il sotto-blocco
-//     return generateRecursiveArrayMap({
-//       currentPath: this.args.currentPath, // Path fin qui (es. ['Order'])
-//       nextPathSegment: [subArrayName], // Segmento target (es. ['items'])
-//       leafExpression,
-//     })
-//   },
-// Query(targetNode, statementsNode) {
-//     const targetInfo = targetNode.eval(this.args.currentPath);
-//     const entityName = targetInfo.name;
-//     const targetIds = idsStringInt(targetInfo.ids)
-//     const childPath = [entityName];
-
-//     // Uniamo tutte le istruzioni piatte
-//     const stmts = statementsNode.children.map(c => c.eval(childPath));
-//     const flatMutations = Object.assign({}, ...stmts);
-
-//     // ✨ MAGIA QUI: Espandiamo la dot notation in $mergeObjects
-//     const expandedMutations = expandDotNotation(flatMutations, "$$CURRENT_ITEM");
-
-//     const leafExpression = {
-//       $cond: {
-//         if: { $in: ["$$CURRENT_ITEM.id", targetIds] },
-//         then: expandedMutations, // <-- Usiamo le mutazioni espanse
-//         else: {}
-//       }
-//     };
-
-//     return generateRecursiveArrayMap({
-//       currentPath: [],
-//       nextPathSegment: [entityName],
-//       leafExpression
-//     });
-//   },
-
-//   NestedBlock(targetNode, statementsNode, _up) {
-//     const targetInfo = targetNode.eval(this.args.currentPath);
-//     const subArrayName = targetInfo.name;
-//     const targetIds = idsStringInt(targetInfo.ids)
-//     const childPath = [...this.args.currentPath, subArrayName];
-
-//     // Uniamo tutte le istruzioni piatte
-//     const stmts = statementsNode.children.map(c => c.eval(childPath));
-//     const flatMutations = Object.assign({}, ...stmts);
-
-//     // ✨ MAGIA QUI: Espandiamo la dot notation anche nei blocchi annidati!
-//     const expandedMutations = expandDotNotation(flatMutations, "$$CURRENT_ITEM");
-
-//     const leafExpression = {
-//       $cond: {
-//         if: { $in: ["$$CURRENT_ITEM.id", targetIds] },
-//         then: expandedMutations, // <-- Usiamo le mutazioni espanse
-//         else: {}
-//       }
-//     };
-
-//     return generateRecursiveArrayMap({
-//       currentPath: this.args.currentPath,
-//       nextPathSegment: [subArrayName],
-//       leafExpression
-//     });
-//   },
   Query(targetNode, statementsNode) {
     const targetInfo = targetNode.eval(this.args.currentPath);
     const entityName = targetInfo.name;
-    const targetIds = targetInfo.ids;
+    const targetIds = idsStringInt(targetInfo.ids)
     const childPath = [entityName];
 
     const stmts = statementsNode.children.map(c => c.eval(childPath));
@@ -156,7 +46,7 @@ semantics.addOperation('eval(currentPath)', {
   NestedBlock(targetNode, statementsNode, _up) {
     const targetInfo = targetNode.eval(this.args.currentPath);
     const subArrayName = targetInfo.name;
-    const targetIds = targetInfo.ids;
+    const targetIds = idsStringInt(targetInfo.ids)
     const childPath = [...this.args.currentPath, subArrayName];
 
     const stmts = statementsNode.children.map(c => c.eval(childPath));
@@ -315,7 +205,7 @@ export function compileQueryToPipeline(query: string): AnyObject[] {
 
   const pipeline = [{ $set: setExpression }]
   // Ritorna la pipeline pronta per essere passata a MongoDB
-  console.log(inspect(pipeline,{depth: 20 , }))
+  // console.log(inspect(pipeline,{depth: 20 , }))
   return pipeline
 }
 /**
