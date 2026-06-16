@@ -10,8 +10,11 @@ type User<idType extends string | number =number> = {
    role: string 
 }
 export const Users:User[] = [
-    { id: 1, status: '1', role: '1' },
-    { id: 2, status: '2', role: '2' },
-    { id: 3, status: '3', role: '3' },
-    { id: 4, status: '4', role: '4' },
+    { id: 1, status: 'status_1', role: 'role_1' },
+    { id: 2, status: 'status_2', role: 'role_2' },
+    { id: 3, status: 'status_3', role: 'role_3' },
+    { id: 4, status: 'status_4', role: 'role_4' },
 ]
+export const Model = {
+  User: Users
+}
