@@ -39,8 +39,8 @@ semantics.addOperation('toAST', {
     AddOp(_add, ident, jsonMock) {
         return { type: 'ADD', field: ident.sourceString, value: JSON.parse(jsonMock.sourceString.trim()) };
     },
-    AddSetOp(_addset, ident, jsonMock) {
-        return { type: 'ADDSET', field: ident.sourceString, value: JSON.parse(jsonMock.sourceString.trim()) };
+    UpsertOp(_upsert, ident, jsonMock) {
+        return { type: 'UPSERT', field: ident.sourceString, value: JSON.parse(jsonMock.sourceString.trim()) };
     },
     RemoveOp(_remove, ident, _lparen, ids, _rparen) {
         return { type: 'REMOVE', field: ident.sourceString, ids: ids.asIteration().children.map(c => c.sourceString) };
@@ -82,9 +82,9 @@ function buildMongoPipelineBlock(statements, isRoot = true) {
                 };
                 break;
             
-            // ADDSET richiederebbe una logica complessa di $map + $concatArrays.
+            // UPSERT richiederebbe una logica complessa di $map + $concatArrays.
             // Qui generiamo uno stub espandibile in base a come gestisci le primary key interne.
-            case 'ADDSET': 
+            case 'UPSERT': 
                  mutations[stmt.field] = { /* Logica Upsert tramite map o $setUnion */ };
                  break;
         }

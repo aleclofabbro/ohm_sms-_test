@@ -15,61 +15,170 @@ const semantics = grammar.createSemantics()
  * i PipelineGeneratorArgs della tua funzione custom.
  */
 semantics.addOperation('eval(currentPath)', {
+//   Query(targetNode, statementsNode) {
+//     const targetInfo = targetNode.eval(this.args.currentPath)
+//     const entityName = targetInfo.name
+//     const targetIds = idsStringInt(targetInfo.ids)
+
+//     // Costruiamo il path per i figli (es: ['Order'])
+//     const childPath = [entityName]
+
+//     // Valutiamo tutte le istruzioni sottostanti e uniamo gli oggetti ritornati
+//     const stmts = statementsNode.children.map((c) => c.eval(childPath))
+//     const mutations = Object.assign({}, ...stmts)
+
+//     // Costruiamo la leafExpression (il caso foglia per il $set)
+//     const leafExpression = {
+//       $cond: {
+//         if: { $in: ['$$CURRENT_ITEM.id', targetIds] },
+//         then: mutations,
+//         else: {},
+//       },
+//     }
+
+//     // Chiamiamo la tua utility ricorsiva
+//     return generateRecursiveArrayMap({
+//       currentPath: [],
+//       nextPathSegment: [entityName],
+//       leafExpression,
+//     })
+//   },
+
+//   NestedBlock(targetNode, statementsNode, _up) {
+//     const targetInfo = targetNode.eval(this.args.currentPath)
+//     const subArrayName = targetInfo.name
+//     const targetIds = idsStringInt(targetInfo.ids)
+//     // Aggiungiamo il segmento corrente al path ricorsivo
+//     const childPath = [...this.args.currentPath, subArrayName]
+
+//     const stmts = statementsNode.children.map((c) => c.eval(childPath))
+//     const mutations = Object.assign({}, ...stmts)
+
+//     const leafExpression = {
+//       $cond: {
+//         if: { $in: ['$$CURRENT_ITEM.id', targetIds] },
+//         then: mutations,
+//         else: {},
+//       },
+//     }
+
+//     // Ricorsione per il sotto-blocco
+//     return generateRecursiveArrayMap({
+//       currentPath: this.args.currentPath, // Path fin qui (es. ['Order'])
+//       nextPathSegment: [subArrayName], // Segmento target (es. ['items'])
+//       leafExpression,
+//     })
+//   },
+// Query(targetNode, statementsNode) {
+//     const targetInfo = targetNode.eval(this.args.currentPath);
+//     const entityName = targetInfo.name;
+//     const targetIds = idsStringInt(targetInfo.ids)
+//     const childPath = [entityName];
+
+//     // Uniamo tutte le istruzioni piatte
+//     const stmts = statementsNode.children.map(c => c.eval(childPath));
+//     const flatMutations = Object.assign({}, ...stmts);
+
+//     // ✨ MAGIA QUI: Espandiamo la dot notation in $mergeObjects
+//     const expandedMutations = expandDotNotation(flatMutations, "$$CURRENT_ITEM");
+
+//     const leafExpression = {
+//       $cond: {
+//         if: { $in: ["$$CURRENT_ITEM.id", targetIds] },
+//         then: expandedMutations, // <-- Usiamo le mutazioni espanse
+//         else: {}
+//       }
+//     };
+
+//     return generateRecursiveArrayMap({
+//       currentPath: [],
+//       nextPathSegment: [entityName],
+//       leafExpression
+//     });
+//   },
+
+//   NestedBlock(targetNode, statementsNode, _up) {
+//     const targetInfo = targetNode.eval(this.args.currentPath);
+//     const subArrayName = targetInfo.name;
+//     const targetIds = idsStringInt(targetInfo.ids)
+//     const childPath = [...this.args.currentPath, subArrayName];
+
+//     // Uniamo tutte le istruzioni piatte
+//     const stmts = statementsNode.children.map(c => c.eval(childPath));
+//     const flatMutations = Object.assign({}, ...stmts);
+
+//     // ✨ MAGIA QUI: Espandiamo la dot notation anche nei blocchi annidati!
+//     const expandedMutations = expandDotNotation(flatMutations, "$$CURRENT_ITEM");
+
+//     const leafExpression = {
+//       $cond: {
+//         if: { $in: ["$$CURRENT_ITEM.id", targetIds] },
+//         then: expandedMutations, // <-- Usiamo le mutazioni espanse
+//         else: {}
+//       }
+//     };
+
+//     return generateRecursiveArrayMap({
+//       currentPath: this.args.currentPath,
+//       nextPathSegment: [subArrayName],
+//       leafExpression
+//     });
+//   },
   Query(targetNode, statementsNode) {
-    const targetInfo = targetNode.eval(this.args.currentPath)
-    const entityName = targetInfo.name
-    const targetIds = idsStringInt(targetInfo.ids)
+    const targetInfo = targetNode.eval(this.args.currentPath);
+    const entityName = targetInfo.name;
+    const targetIds = targetInfo.ids;
+    const childPath = [entityName];
 
-    // Costruiamo il path per i figli (es: ['Order'])
-    const childPath = [entityName]
+    const stmts = statementsNode.children.map(c => c.eval(childPath));
+    
+    // 1. Concatena le operazioni che agiscono sulla stessa chiave
+    const chainedMutations = chainMutations(stmts);
+    
+    // 2. Espande la dot-notation in $mergeObjects
+    const expandedMutations = expandDotNotation(chainedMutations, "$$CURRENT_ITEM");
 
-    // Valutiamo tutte le istruzioni sottostanti e uniamo gli oggetti ritornati
-    const stmts = statementsNode.children.map((c) => c.eval(childPath))
-    const mutations = Object.assign({}, ...stmts)
-
-    // Costruiamo la leafExpression (il caso foglia per il $set)
     const leafExpression = {
       $cond: {
-        if: { $in: ['$$CURRENT_ITEM.id', targetIds] },
-        then: mutations,
-        else: {},
-      },
-    }
+        if: { $in: ["$$CURRENT_ITEM.id", targetIds] },
+        then: expandedMutations,
+        else: {}
+      }
+    };
 
-    // Chiamiamo la tua utility ricorsiva
     return generateRecursiveArrayMap({
       currentPath: [],
       nextPathSegment: [entityName],
-      leafExpression,
-    })
+      leafExpression
+    });
   },
 
   NestedBlock(targetNode, statementsNode, _up) {
-    const targetInfo = targetNode.eval(this.args.currentPath)
-    const subArrayName = targetInfo.name
-    const targetIds = idsStringInt(targetInfo.ids)
-    // Aggiungiamo il segmento corrente al path ricorsivo
-    const childPath = [...this.args.currentPath, subArrayName]
+    const targetInfo = targetNode.eval(this.args.currentPath);
+    const subArrayName = targetInfo.name;
+    const targetIds = targetInfo.ids;
+    const childPath = [...this.args.currentPath, subArrayName];
 
-    const stmts = statementsNode.children.map((c) => c.eval(childPath))
-    const mutations = Object.assign({}, ...stmts)
+    const stmts = statementsNode.children.map(c => c.eval(childPath));
+    
+    // Stessa logica di risoluzione per i blocchi annidati
+    const chainedMutations = chainMutations(stmts);
+    const expandedMutations = expandDotNotation(chainedMutations, "$$CURRENT_ITEM");
 
     const leafExpression = {
       $cond: {
-        if: { $in: ['$$CURRENT_ITEM.id', targetIds] },
-        then: mutations,
-        else: {},
-      },
-    }
+        if: { $in: ["$$CURRENT_ITEM.id", targetIds] },
+        then: expandedMutations,
+        else: {}
+      }
+    };
 
-    // Ricorsione per il sotto-blocco
     return generateRecursiveArrayMap({
-      currentPath: this.args.currentPath, // Path fin qui (es. ['Order'])
-      nextPathSegment: [subArrayName], // Segmento target (es. ['items'])
-      leafExpression,
-    })
+      currentPath: this.args.currentPath,
+      nextPathSegment: [subArrayName],
+      leafExpression
+    });
   },
-
   Target(_on, ident, _lparen, ids, _rparen) {
     return {
       name: ident.sourceString,
@@ -84,7 +193,7 @@ semantics.addOperation('eval(currentPath)', {
   Statement_AddOp(op) {
     return op.eval(this.args.currentPath)
   },
-  Statement_AddSetOp(op) {
+  Statement_UpsertOp(op) {
     return op.eval(this.args.currentPath)
   },
   Statement_RemoveOp(op) {
@@ -113,7 +222,7 @@ semantics.addOperation('eval(currentPath)', {
     }
   },
 
-  AddSetOp(_addset, ident, jsonMock) {
+  UpsertOp(_upsert, ident, jsonMock) {
     const key = ident.sourceString
     const newItems = JSON.parse(jsonMock.sourceString.trim())
 
@@ -206,6 +315,88 @@ export function compileQueryToPipeline(query: string): AnyObject[] {
 
   const pipeline = [{ $set: setExpression }]
   // Ritorna la pipeline pronta per essere passata a MongoDB
-//   console.log(inspect(pipeline,{depth: 20 , }))
+  console.log(inspect(pipeline,{depth: 20 , }))
   return pipeline
+}
+/**
+ * Converte un oggetto piatto con chiavi in dot-notation in un albero di $mergeObjects.
+ * Es: { "customer.type": "premium" } => { customer: { $mergeObjects: [...] } }
+ */
+function expandDotNotation(flatMutations: Record<string, any>, basePath: string = "$$CURRENT_ITEM"): Record<string, any> {
+  const expanded: Record<string, any> = {};
+  const nestedGroups: Record<string, Record<string, any>> = {};
+
+  // 1. Separiamo le chiavi piatte da quelle annidate
+  for (const [key, value] of Object.entries(flatMutations)) {
+    if (key.includes('.')) {
+      const [first, ...rest] = key.split('.');
+      if (!nestedGroups[first]) nestedGroups[first] = {};
+      nestedGroups[first][rest.join('.')] = value;
+    } else {
+      expanded[key] = value;
+    }
+  }
+
+  // 2. Risolviamo ricorsivamente i gruppi annidati usando $mergeObjects
+  for (const [first, nestedMutations] of Object.entries(nestedGroups)) {
+    const currentPropPath = `${basePath}.${first}`;
+    const resolvedNested = expandDotNotation(nestedMutations, currentPropPath);
+    
+    expanded[first] = {
+      $mergeObjects: [
+        { $ifNull: [`${basePath}.${first}`, {}] },
+        resolvedNested
+      ]
+    };
+  }
+
+  return expanded;
+}
+/**
+ * Risolve le collisioni di istruzioni multiple sulla stessa chiave.
+ * Invece di sovrascrivere, concatena le operazioni passando l'output 
+ * della precedente come input della successiva tramite $let.
+ */
+function chainMutations(stmts: Record<string, any>[]): Record<string, any> {
+  const result: Record<string, any> = {};
+
+  for (const stmt of stmts) {
+    for (const [key, expr] of Object.entries(stmt)) {
+      if (result[key] !== undefined) {
+        // COLLISIONE RILEVATA! (es. REMOVE logs seguito da ADD logs)
+        const previousExpr = result[key];
+        
+        result[key] = {
+          $let: {
+            vars: { PREV_VAL: previousExpr },
+            // Sostituiamo il riferimento alla risorsa originale con il risultato step precedente
+            in: deepReplace(expr, `$$CURRENT_ITEM.${key}`, "$$PREV_VAL")
+          }
+        };
+      } else {
+        result[key] = expr;
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Naviga l'AST ricorsivamente per sostituire una stringa specifica.
+ */
+function deepReplace(obj: any, search: string, replacement: string): any {
+  if (typeof obj === 'string') {
+    return obj === search ? replacement : obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepReplace(item, search, replacement));
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const newObj: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      newObj[k] = deepReplace(v, search, replacement);
+    }
+    return newObj;
+  }
+  return obj;
 }

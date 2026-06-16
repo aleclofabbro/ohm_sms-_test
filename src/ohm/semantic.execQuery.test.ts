@@ -62,11 +62,11 @@ ON Order(order_2)
     expect(targetOrder.logs[0]).toEqual({ id: 'log_2', event: 'delivered' });
   });
 
-  test('3. ADDSET: Deve aggiornare un elemento se l\'ID esiste, o appenderlo se non esiste (Upsert)', () => {
+  test('3. UPSERT: Deve aggiornare un elemento se l\'ID esiste, o appenderlo se non esiste (Upsert)', () => {
     const query = `
 ON Order(order_1)
   // item_1 esiste (verrà sovrascritto), item_4 è nuovo (verrà aggiunto)
-  ADDSET items [{"id": "item_1", "name": "Laptop Pro", "isGift": true}, {"id": "item_4", "name": "Monitor", "isGift": false}]
+  UPSERT items [{"id": "item_1", "name": "Laptop Pro", "isGift": true}, {"id": "item_4", "name": "Monitor", "isGift": false}]
 `
     const [result] = execQuery(query, getMockModel()) as [any];
     const items = result.Order.find((o: any) => o.id === 'order_1').items;

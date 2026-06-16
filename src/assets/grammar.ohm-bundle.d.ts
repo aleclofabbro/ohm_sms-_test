@@ -15,7 +15,7 @@ export interface CustomQueryLanguageActionDict<T> extends BaseActionDict<T> {
   Query?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode) => T;
   Statement_SetOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   Statement_AddOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  Statement_AddSetOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  Statement_UpsertOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   Statement_RemoveOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   Statement_NestedBlock?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   Statement?: (this: NonterminalNode, arg0: NonterminalNode) => T;
@@ -23,7 +23,7 @@ export interface CustomQueryLanguageActionDict<T> extends BaseActionDict<T> {
   Target?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
   SetOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode) => T;
   AddOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
-  AddSetOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
+  UpsertOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
   RemoveOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
   path?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   ident?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode) => T;

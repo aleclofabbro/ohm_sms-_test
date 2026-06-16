@@ -17,7 +17,7 @@ export function getPipeline(query: string): AnyObject[] {
     },
     // AddOp(_AddOp, b, c) {
     // },
-    // AddSetOp(_AddSetOp, b, c) {
+    // UpsertOp(_UpsertOp, b, c) {
     // },
     // RemoveOp(_RemoveOp, b, c, d, e) {
     // },

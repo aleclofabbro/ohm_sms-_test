@@ -1,11 +1,11 @@
 CustomQueryLanguage {
   Query = Target Statement+
 
-  Statement = SetOp        -- AddOpSetOp
-            | AddOp        -- AddOpAddOp
-            | AddSetOp     -- AddOpAddSetOp
-            | RemoveOp     -- AddOpRemoveOp
-            | NestedBlock  -- AddOp
+  Statement = SetOp        -- SetOp
+            | AddOp        -- AddOp
+            | UpsertOp     -- UpsertOp
+            | RemoveOp     -- RemoveOp
+            | NestedBlock  -- NestedBlock
 
   NestedBlock = Target Statement+ "UP"
 
@@ -13,7 +13,7 @@ CustomQueryLanguage {
 
   SetOp    = "SET" path ":" jsonMock
   AddOp    = "ADD" ident jsonMock
-  AddSetOp = "ADDSET" ident jsonMock
+  UpsertOp = "UPSERT" ident jsonMock
   RemoveOp = "REMOVE" ident "(" NonemptyListOf<idRaw, ","> ")"
 
   path  = applySyntactic<NonemptyListOf<ident, ".">>

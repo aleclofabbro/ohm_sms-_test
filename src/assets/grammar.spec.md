@@ -17,7 +17,7 @@ Il linguaggio permette di selezionare entità o sotto-elementi tramite identific
 Una query è composta da due elementi fondamentali:
 
 1. **Dichiarazione del Target (`ON`)**: Definisce su quali entità o sotto-elementi agiranno i comandi successivi.
-2. **Dichiarazione delle Operazioni**: Una serie di istruzioni mutazionali (`SET`, `ADD`, `ADDSET`, `REMOVE`), scritte sequenzialmente e separate da ritorni a capo (`\n`).
+2. **Dichiarazione delle Operazioni**: Una serie di istruzioni mutazionali (`SET`, `ADD`, `UPSERT`, `REMOVE`), scritte sequenzialmente e separate da ritorni a capo (`\n`).
 
 ---
 
@@ -64,12 +64,12 @@ Aggiunge nuovi elementi all'interno di una proprietà di tipo lista/array.
 * **Sintassi:** `ADD nomeCampo arrayJSON`
 * **Esempio:** `ADD tags ["premium", "verified"]`
 
-### 4.3 Inserimento/Aggiornamento in Liste (`ADDSET`)
+### 4.3 Inserimento/Aggiornamento in Liste (`UPSERT`)
 
 Esegue un'operazione di *upsert* su una lista. Se l'elemento esiste già (sulla base del suo ID), viene aggiornato; altrimenti viene aggiunto.
 
-* **Sintassi:** `ADDSET nomeCampo arrayJSON`
-* **Esempio:** `ADDSET roles [{"id": "r1", "name": "editor"}]`
+* **Sintassi:** `UPSERT nomeCampo arrayJSON`
+* **Esempio:** `UPSERT roles [{"id": "r1", "name": "editor"}]`
 
 ### 4.4 Rimozione da Liste (`REMOVE`)
 
