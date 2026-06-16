@@ -1,4 +1,4 @@
-import { execQuery } from './execQuery'
+import { execQuery } from './semantic.mingo.execQuery'
 export const User: User<string>[] = [
   { id: '1', status: 'status_1', role: 'role_1' },
   { id: '2', status: 'status_2', role: 'role_2' },

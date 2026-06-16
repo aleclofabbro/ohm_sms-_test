@@ -1,4 +1,4 @@
-import { execQuery } from './execQuery'
+import { execQuery } from './semantic.mingo.execQuery'
 
 // --- Mock Data ---
 // Usiamo un modello leggermente più complesso per testare in profondità 

@@ -1,4 +1,4 @@
-import { compileQueryToPipeline } from './semantic'
+import { compileQueryToPipeline } from './semantic.mingo'
 
 test('pipeline q1', () => {
   const pipeline = compileQueryToPipeline(`

@@ -1,6 +1,6 @@
 // import specs from './openapi.json'
 import type { AnyObject } from 'mingo/types'
-import { compileQueryToPipeline } from './semantic'
+import { compileQueryToPipeline } from './semantic.mingo'
 import { Aggregator, Context, ProcessingMode } from 'mingo'
 import { $eq, $filter, $map, $let, $in, $concatArrays, $ifNull, $mergeObjects, $cond, $not } from 'mingo/operators/expression'
 import { $match, $set } from 'mingo/operators/pipeline'

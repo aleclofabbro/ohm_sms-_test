@@ -1,11 +1,11 @@
-import { generateRecursiveArrayMap } from './generateRecursiveArrayMap' // La tua funzione precedente
+import { generateRecursiveArrayMap } from './semantic.mingo.generateRecursiveArrayMap' // La tua funzione precedente
 import grammar from '../assets/grammar.ohm-bundle'
 import type { AnyObject } from 'mingo/types'
 
 // 1. Inizializzazione della grammatica (stringa fornita nel tuo file grammar.ohm)
 
 // 2. Creazione della Semantica
-const semantics = grammar.createSemantics()
+const mingoSemantics = grammar.createSemantics()
 
 /**
  * Operazione 'eval(currentPath)':
@@ -13,7 +13,7 @@ const semantics = grammar.createSemantics()
  * currentPath: Tiene traccia del path ricorsivo corrente per comporre correttamente
  * i PipelineGeneratorArgs della tua funzione custom.
  */
-semantics.addOperation('eval(currentPath)', {
+mingoSemantics.addOperation('eval(currentPath)', {
   Query(targetNode, statementsNode) {
     const targetInfo = targetNode.eval(this.args.currentPath);
     const entityName = targetInfo.name;
@@ -93,7 +93,7 @@ semantics.addOperation('eval(currentPath)', {
     return op.eval(this.args.currentPath)
   },
 
-  // --- Implementazione delle Mutazioni MongoDB ---
+  // --- Implementazione delle Mutazioni Mingo ---
 
   SetOp(_set, path, _colon, jsonMock) {
     const key = path.sourceString
@@ -200,10 +200,10 @@ export function compileQueryToPipeline(query: string): AnyObject[] {
   //   }
 
   // Eseguiamo la valutazione dell'AST passando come currentPath iniziale un array vuoto
-  const setExpression = semantics(match).eval([])
+  const setExpression = mingoSemantics(match).eval([])
 
   const pipeline = [{ $set: setExpression }]
-  // Ritorna la pipeline pronta per essere passata a MongoDB
+  // Ritorna la pipeline pronta per essere passata a Mingo
   // console.log(inspect(pipeline,{depth: 20 , }))
   return pipeline
 }
