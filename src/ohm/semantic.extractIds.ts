@@ -1,4 +1,4 @@
-import grammar from '../assets/grammar.ohm-bundle'
+import grammar from './grammar/grammar.ohm-bundle'
 
 export type ExtractIdsResult = {
   [entityName in string]: string[]

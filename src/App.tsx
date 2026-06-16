@@ -2,7 +2,7 @@ import ReactJsonView from '@microlink/react-json-view'
 import type { MatchResult } from 'ohm-js'
 import { useEffect, useReducer, useState } from 'react'
 import { useDebounceCallback } from 'usehooks-ts'
-import grammar from './assets/grammar.ohm-bundle'
+import grammar from './ohm/grammar/grammar.ohm-bundle'
 
 function App() {
   const [json, setJson] = useState<unknown>()

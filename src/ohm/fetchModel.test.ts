@@ -1,5 +1,5 @@
 import { fetchModel } from './fetchModel'
-import { entityFileReader } from './mock/entityFileReader._.test'
+import { entityFileReader } from './fetch-local-fs/entityFileReader._.test'
 
 test('fetchModel', async () => {
   const model = await fetchModel({

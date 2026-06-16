@@ -1,5 +1,5 @@
 import { generateRecursiveArrayMap } from './semantic.mingo.generateRecursiveArrayMap' // La tua funzione precedente
-import grammar from '../assets/grammar.ohm-bundle'
+import grammar from './grammar/grammar.ohm-bundle'
 import type { AnyObject } from 'mingo/types'
 
 // 1. Inizializzazione della grammatica (stringa fornita nel tuo file grammar.ohm)

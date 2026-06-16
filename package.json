@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "t": "jest",
-    "tw": "jest --watch",
+    "test": "jest",
     "gram": "ohm generateBundles --withTypes src/assets/*.ohm"
   },
   "dependencies": {

@@ -1,7 +1,7 @@
 {
   "files": [],
   "include": ["src"],
-  "exclude": ["src/assets/entities"],
+  "exclude": ["src/ohm/grammar/entities"],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" },
