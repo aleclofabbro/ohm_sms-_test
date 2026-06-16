@@ -102,7 +102,6 @@ semantics.addOperation('eval(currentPath)', {
   },
 
   AddOp(_add, ident, jsonMock) {
-      console.log('***********\n',[ident, jsonMock].map(_=>_.sourceString))
     const key = ident.sourceString
     const newItems = JSON.parse(jsonMock.sourceString.trim())
     return {
