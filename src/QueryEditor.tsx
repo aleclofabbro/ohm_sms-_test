@@ -7,6 +7,7 @@ export const QueryEditor: React.FC = () => {
   const [query, setQuery] = useState<string>(`
 ON Channel(102052,808,100411,100454,100646,100786,100941,101740,101932)
   SET enabled: true
+  ADD paymentConfigurations [{ "enabled": true, "paymentId": "PAYPAL" }]
 `.trim());
   const { compileAndExecute } = useOhmCompiler();
   const { model } = useResult();
