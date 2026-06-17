@@ -1,5 +1,8 @@
 import { execQuery } from './semantic.mingo.execQuery'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type _any = any 
+
 // --- Mock Data ---
 // Usiamo un modello leggermente più complesso per testare in profondità
 // la manipolazione degli array e il targeting annidato.
@@ -32,9 +35,9 @@ ON Order(order_1)
   SET status: "processing"
   SET customer.type: "premium"
 `
-    const result = execQuery(query, getMockModel()) as any
-    const targetOrder = result.Order.find((o: any) => o.id === 'order_1')
-    const untargetedOrder = result.Order.find((o: any) => o.id === 'order_2')
+    const result = execQuery(query, getMockModel()) as _any
+    const targetOrder = result.Order.find((o: _any) => o.id === 'order_1')
+    const untargetedOrder = result.Order.find((o: _any) => o.id === 'order_2')
     // Asserzioni sull'elemento bersaglio
     expect(targetOrder.status).toBe('processing')
     expect(targetOrder.customer.type).toBe('premium')
@@ -48,8 +51,8 @@ ON Order(order_1)
 ON Order(order_2)
   ADD logs [{"id": "log_2", "event": "delivered"}]
 `
-    const result = execQuery(query, getMockModel()) as any
-    const targetOrder = result.Order.find((o: any) => o.id === 'order_2')
+    const result = execQuery(query, getMockModel()) as _any
+    const targetOrder = result.Order.find((o: _any) => o.id === 'order_2')
 
     expect(targetOrder.logs).toHaveLength(1)
     expect(targetOrder.logs[0]).toEqual({ id: 'log_2', event: 'delivered' })
@@ -61,16 +64,16 @@ ON Order(order_1)
   // item_1 esiste (verrà sovrascritto), item_4 è nuovo (verrà aggiunto)
   UPSERT items [{"id": "item_1", "name": "Laptop Pro", "isGift": true}, {"id": "item_4", "name": "Monitor", "isGift": false}]
 `
-    const result = execQuery(query, getMockModel()) as any
-    const items = result.Order.find((o: any) => o.id === 'order_1').items
+    const result = execQuery(query, getMockModel()) as _any
+    const items = result.Order.find((o: _any) => o.id === 'order_1').items
 
     expect(items).toHaveLength(3) // item_2 (intatto), item_1 (aggiornato), item_4 (nuovo)
 
-    const item1 = items.find((i: any) => i.id === 'item_1')
+    const item1 = items.find((i: _any) => i.id === 'item_1')
     expect(item1.name).toBe('Laptop Pro')
     expect(item1.isGift).toBe(true)
 
-    const item4 = items.find((i: any) => i.id === 'item_4')
+    const item4 = items.find((i: _any) => i.id === 'item_4')
     expect(item4).toBeDefined()
   })
 
@@ -79,8 +82,8 @@ ON Order(order_1)
 ON Order(order_1)
   REMOVE items(item_2)
 `
-    const result = execQuery(query, getMockModel()) as any
-    const items = result.Order.find((o: any) => o.id === 'order_1').items
+    const result = execQuery(query, getMockModel()) as _any
+    const items = result.Order.find((o: _any) => o.id === 'order_1').items
 
     expect(items).toHaveLength(1)
     expect(items[0].id).toBe('item_1') // Solo item_1 deve sopravvivere
@@ -93,11 +96,11 @@ ON Order(order_1)
     SET isGift: true
   UP
 `
-    const result = execQuery(query, getMockModel()) as any
-    const items = result.Order.find((o: any) => o.id === 'order_1').items
+    const result = execQuery(query, getMockModel()) as _any
+    const items = result.Order.find((o: _any) => o.id === 'order_1').items
 
-    const item1 = items.find((i: any) => i.id === 'item_1')
-    const item2 = items.find((i: any) => i.id === 'item_2')
+    const item1 = items.find((i: _any) => i.id === 'item_1')
+    const item2 = items.find((i: _any) => i.id === 'item_2')
 
     // Il nested block deve aver modificato solo item_1
     expect(item1.isGift).toBe(true)
@@ -119,18 +122,18 @@ ON Order(order_1, order_2)
   REMOVE logs(log_1)
   ADD logs [{"id": "log_archived", "event": "System Archive"}]
 `
-    const result = execQuery(query, getMockModel()) as any
+    const result = execQuery(query, getMockModel()) as _any
 
     // Controllo su order_1
-    const o1 = result.Order.find((o: any) => o.id === 'order_1')
+    const o1 = result.Order.find((o: _any) => o.id === 'order_1')
     expect(o1.status).toBe('archived')
-    expect(o1.items.find((i: any) => i.id === 'item_1').isGift).toBe(false)
-    expect(o1.logs.find((l: any) => l.id === 'log_1')).toBeUndefined()
-    expect(o1.logs.find((l: any) => l.id === 'log_archived')).toBeDefined()
+    expect(o1.items.find((i: _any) => i.id === 'item_1').isGift).toBe(false)
+    expect(o1.logs.find((l: _any) => l.id === 'log_1')).toBeUndefined()
+    expect(o1.logs.find((l: _any) => l.id === 'log_archived')).toBeDefined()
 
     // Controllo su order_2
-    const o2 = result.Order.find((o: any) => o.id === 'order_2')
+    const o2 = result.Order.find((o: _any) => o.id === 'order_2')
     expect(o2.status).toBe('archived')
-    expect(o2.items.find((i: any) => i.id === 'item_3').isGift).toBe(false)
+    expect(o2.items.find((i: _any) => i.id === 'item_3').isGift).toBe(false)
   })
 })

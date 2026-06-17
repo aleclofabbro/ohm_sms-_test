@@ -4,6 +4,10 @@
     "composite": true,
     "types": ["jest", "node"],
     "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": false,
+    "moduleResolution": "nodenext",
+    "module": "nodenext"
   },
   "include": [
     "src/**/*.ts",
