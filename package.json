@@ -9,10 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
-    "gram": "ohm generateBundles --withTypes src/assets/*.ohm"
+    "gram": "ohm generateBundles -te src/ohm/grammar/*.ohm"
   },
   "dependencies": {
     "@microlink/react-json-view": "^1.31.20",
+    "@monaco-editor/react": "^4.7.0",
     "immer": "^11.1.8",
     "json-schema-typed": "^8.0.2",
     "mingo": "^7.2.1",
@@ -20,6 +21,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "usehooks-ts": "^3.1.1",
+    "virtual-react-json-diff": "^1.0.16",
     "vite": "^8.0.16"
   },
   "devDependencies": {

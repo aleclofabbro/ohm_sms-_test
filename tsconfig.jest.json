@@ -9,5 +9,5 @@
     "src/**/*.ts",
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
-  ]
+, "src/SandboxContexts.tsx", "src/ResultViewer.tsx", "src/QueryEditor.tsx"  ]
 }

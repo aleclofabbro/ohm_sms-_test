@@ -1,0 +1,42 @@
+/* Sandbox.css */
+.sandbox-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 60px 1fr;
+  gap: 16px;
+  height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.sandbox-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #333;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background-color: #252526;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 8px 12px;
+  background-color: #2d2d2d;
+  font-weight: bold;
+  font-size: 14px;
+  border-bottom: 1px solid #333;
+}
+
+.panel-content {
+  flex-grow: 1;
+  overflow: auto;
+}

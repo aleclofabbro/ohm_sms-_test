@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
-
+import path from 'path'
+import { entityFileReaderStr } from './src/ohm/fetch-local-fs/entityFileReader._.test'
 // https://vite.dev/config/
 export default defineConfig({
   build: {
@@ -9,14 +10,32 @@ export default defineConfig({
       external: [/\.test\.ts[x]?$/],
     },
   },
-  resolve:{
-    tsconfigPaths: true
+  resolve: {
+    tsconfigPaths: true,
   },
-  cacheDir:'./.vitecache',
+  cacheDir: './.vitecache',
+  server: {
+    fs: { allow: ['..'] }
+  },
   plugins: [
     react(),
-    babel({ presets: [
-      reactCompilerPreset()
-    ] }),
+    babel({ presets: [reactCompilerPreset()] }),
+    {
+      name: 'serve-entites',
+      configureServer(server) {
+        server.middlewares.use(async (req, res, next) => {
+          if (req.url?.startsWith('/_/')) {
+            const basePath = path.resolve(__dirname, '../entities')
+            const [name, id] = req.url.replace('/_/', '').split('?')[0].split('_')
+            const entityStr = await entityFileReaderStr({basePath, name, id})
+            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.write(entityStr)
+            res.end()
+          }
+          next()
+        })
+      },
+    },
   ],
 })

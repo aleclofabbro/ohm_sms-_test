@@ -2,9 +2,7 @@ import { generateRecursiveArrayMap } from './semantic.mingo.generateRecursiveArr
 import grammar from './grammar/grammar.ohm-bundle'
 import type { AnyObject } from 'mingo/types'
 
-// 1. Inizializzazione della grammatica (stringa fornita nel tuo file grammar.ohm)
-
-// 2. Creazione della Semantica
+// 1. Creazione della Semantica
 const mingoSemantics = grammar.createSemantics()
 
 /**
@@ -178,7 +176,7 @@ function idsStringInt(ids: string[]) {
 }
 
 /**
- * 3. Funzione di Wrappaggio Principale
+ * 2. Funzione di Wrappaggio Principale
  * Prende in ingresso la query testuale e il modello dati.
  */
 export function compileQueryToPipeline(query: string): AnyObject[] {
@@ -211,9 +209,9 @@ export function compileQueryToPipeline(query: string): AnyObject[] {
  * Converte un oggetto piatto con chiavi in dot-notation in un albero di $mergeObjects.
  * Es: { "customer.type": "premium" } => { customer: { $mergeObjects: [...] } }
  */
-function expandDotNotation(flatMutations: Record<string, any>, basePath: string = "$$CURRENT_ITEM"): Record<string, any> {
-  const expanded: Record<string, any> = {};
-  const nestedGroups: Record<string, Record<string, any>> = {};
+function expandDotNotation(flatMutations: AnyObject, basePath: string = "$$CURRENT_ITEM"): AnyObject {
+  const expanded: AnyObject = {};
+  const nestedGroups: Record<string, AnyObject> = {};
 
   // 1. Separiamo le chiavi piatte da quelle annidate
   for (const [key, value] of Object.entries(flatMutations)) {
@@ -246,8 +244,8 @@ function expandDotNotation(flatMutations: Record<string, any>, basePath: string 
  * Invece di sovrascrivere, concatena le operazioni passando l'output 
  * della precedente come input della successiva tramite $let.
  */
-function chainMutations(stmts: Record<string, any>[]): Record<string, any> {
-  const result: Record<string, any> = {};
+function chainMutations(stmts: AnyObject[]): AnyObject {
+  const result: AnyObject = {};
 
   for (const stmt of stmts) {
     for (const [key, expr] of Object.entries(stmt)) {
@@ -281,7 +279,7 @@ function deepReplace(obj: any, search: string, replacement: string): any {
     return obj.map(item => deepReplace(item, search, replacement));
   }
   if (obj !== null && typeof obj === 'object') {
-    const newObj: Record<string, any> = {};
+    const newObj: AnyObject = {};
     for (const [k, v] of Object.entries(obj)) {
       newObj[k] = deepReplace(v, search, replacement);
     }

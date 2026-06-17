@@ -1,22 +1,20 @@
 import ReactJsonView from '@microlink/react-json-view'
 import type { MatchResult } from 'ohm-js'
-import { useEffect, useReducer, useState } from 'react'
-import { useDebounceCallback } from 'usehooks-ts'
+import { useCallback, useEffect, useReducer, useState } from 'react'
+// import { useDebounceCallback } from 'usehooks-ts'
 import grammar from './ohm/grammar/grammar.ohm-bundle'
 
 function App() {
   const [json, setJson] = useState<unknown>()
   useEffect(()=>{
-    fetch('assets/entities/Sale/Channel/Channel/Channel_1.json')
-    .then(_=>_.text())
-    .then(_=>JSON.parse(_))
+    fetchEntity('Channel', 102052)
     .then(setJson)
   },[])  
   const [state, d] = useReducer(...stateReducer())
-  const onTypedQuery = useDebounceCallback(
-    (query: string) => d({ $: 'query', query }),
-    200,
-    {},
+  // const onTypedQuery = useDebounceCallback(
+  const onTypedQuery = useCallback(
+    (query: string) => d({ $: 'query', query })
+    ,[]
   )
 
   return (
@@ -84,3 +82,8 @@ function stateReducer(): Parameters<typeof useReducer<State, [Action]>> {
   ]
 }
 export default App
+
+function fetchEntity(entityName:string, id:string|number){
+  return fetch(`/_/${entityName}_${id}`)
+    .then(_ => _.json())
+}
