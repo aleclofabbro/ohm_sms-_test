@@ -1,13 +1,14 @@
 // SandboxContexts.tsx
 import type { AnyObject } from 'mingo/types';
 import { createContext, useContext } from 'react';
+import type { Model } from './ohm/semantic.types';
 
 // --- TIPI ---
 export type CompilationResult = {
   success: true;
   error?: undefined;
 }|{
-  success: true;
+  success: false;
   error: string;
 }
 
@@ -18,8 +19,8 @@ export interface DiffResult {
 
 // --- CONTESTO DEI RISULTATI ---
 interface ResultContextType {
-  targetData: AnyObject;
-  setTargetData: (data: AnyObject) => void;
+  model: Model;
+  setModel: (data: Model) => void;
   queryResult: DiffResult | null;
   setQueryResult: (result: DiffResult | null) => void;
 }

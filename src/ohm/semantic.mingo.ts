@@ -1,4 +1,4 @@
-import { generateRecursiveArrayMap } from './semantic.mingo.generateRecursiveArrayMap' // La tua funzione precedente
+import { generateRecursiveArrayMap } from './semantic.mingo.generateRecursiveArrayMap'
 import grammar from './grammar/grammar.ohm-bundle'
 import type { AnyObject } from 'mingo/types'
 
@@ -41,6 +41,7 @@ mingoSemantics.addOperation('eval(currentPath)', {
     });
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   NestedBlock(targetNode, statementsNode, _up) {
     const targetInfo = targetNode.eval(this.args.currentPath);
     const subArrayName = targetInfo.name;
@@ -67,6 +68,7 @@ mingoSemantics.addOperation('eval(currentPath)', {
       leafExpression
     });
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Target(_on, ident, _lparen, ids, _rparen) {
     return {
       name: ident.sourceString,
@@ -150,6 +152,7 @@ mingoSemantics.addOperation('eval(currentPath)', {
     }
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   RemoveOp(_remove, ident, _lparen, ids, _rparen) {
     const key = ident.sourceString
     const idList = ids.asIteration().children.map((c) => c.sourceString.trim())
@@ -271,7 +274,7 @@ function chainMutations(stmts: AnyObject[]): AnyObject {
 /**
  * Naviga l'AST ricorsivamente per sostituire una stringa specifica.
  */
-function deepReplace(obj: any, search: string, replacement: string): any {
+function deepReplace(obj: unknown, search: string, replacement: string): unknown {
   if (typeof obj === 'string') {
     return obj === search ? replacement : obj;
   }

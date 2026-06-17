@@ -1,12 +1,10 @@
 import grammar from './grammar/grammar.ohm-bundle'
+import type { ModelIds } from './semantic.types'
 
-export type ExtractIdsResult = {
-  [entityName in string]: string[]
-}
 
 const extractEntitiesIdsSemantics = grammar.createSemantics()
 
-  extractEntitiesIdsSemantics.addOperation<ExtractIdsResult>(
+  extractEntitiesIdsSemantics.addOperation<ModelIds>(
     'extractEntitiesIds()',
     {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -44,8 +42,7 @@ export function extractEntitiesIds(query: string) {
     throw new Error(`Syntax Error in Query:\\n${match.message}`)
   }
 
-  const result = extractEntitiesIdsSemantics(
-    match,
-  ).extractEntitiesIds() as ExtractIdsResult
+  const result = extractEntitiesIdsSemantics(match)
+    .extractEntitiesIds() as ModelIds
   return result
 }

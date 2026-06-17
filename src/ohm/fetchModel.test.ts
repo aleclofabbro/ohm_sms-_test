@@ -9,7 +9,7 @@ ON Channel(102052,808,100411,100454,100646,100786,100941,101740,101932)
   SET role: "admin"
 `,
     io: {
-      async fetchEntityByIds({ ids, name }) {
+      async fetchEntitiesById({ ids, name }) {
         const entities = await Promise.all(ids.map((id) => entityFileReader({ name, id, basePath:'../entities'})))
         return { entities }
       },

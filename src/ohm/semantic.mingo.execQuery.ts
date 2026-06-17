@@ -1,11 +1,11 @@
 // import specs from './openapi.json'
-import type { AnyObject } from 'mingo/types'
-import { compileQueryToPipeline } from './semantic.mingo'
 import { Aggregator, Context, ProcessingMode } from 'mingo'
-import { $eq, $filter, $map, $let, $in, $concatArrays, $ifNull, $mergeObjects, $cond, $not } from 'mingo/operators/expression'
+import { $concatArrays, $cond, $eq, $filter, $ifNull, $in, $let, $map, $mergeObjects, $not } from 'mingo/operators/expression'
 import { $match, $set } from 'mingo/operators/pipeline'
+import { compileQueryToPipeline } from './semantic.mingo'
+import type { Model } from './semantic.types'
 
-export function execQuery(query: string, model: AnyObject[]) {
+export function execQuery(query: string, model: Model) {
   const pipeline = compileQueryToPipeline(query)
   const context = Context.init({
     pipeline: { $match, $set },
@@ -19,6 +19,7 @@ export function execQuery(query: string, model: AnyObject[]) {
     context,
     processingMode: ProcessingMode.CLONE_OFF,
   })
-  return aggregator.run(model)
+  const [result] = aggregator.run([model])
+  return result
 }
 

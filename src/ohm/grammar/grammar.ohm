@@ -1,5 +1,5 @@
 CustomQueryLanguage {
-  Query = Target Statement+
+  Query = Target Statement*
 
   Statement = SetOp        -- SetOp
             | AddOp        -- AddOp

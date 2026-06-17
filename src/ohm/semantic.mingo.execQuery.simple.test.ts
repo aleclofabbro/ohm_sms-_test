@@ -5,11 +5,10 @@ export const User: User<string>[] = [
   { id: '3', status: 'status_3', role: 'role_3' },
   { id: '4', status: 'status_4', role: 'role_4' },
 ]
-export const Model = [
-  {
-    User,
-  },
-]
+export const Model = {
+  User,
+}
+
 test('execQuery q1', () => {
   const result = execQuery(
     `

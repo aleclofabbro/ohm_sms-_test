@@ -26,7 +26,7 @@ export default defineConfig({
         server.middlewares.use(async (req, res, next) => {
           if (req.url?.startsWith('/_/')) {
             const basePath = path.resolve(__dirname, '../entities')
-            const [name, id] = req.url.replace('/_/', '').split('?')[0].split('_')
+            const [name, id] = req.url.replace('/_/', '').split('?')[0].split('/')
             const entityStr = await entityFileReaderStr({basePath, name, id})
             res.setHeader('Content-Type', 'application/json')
             res.setHeader('Access-Control-Allow-Origin', '*')
