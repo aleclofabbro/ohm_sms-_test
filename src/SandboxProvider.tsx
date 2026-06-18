@@ -10,7 +10,6 @@ import {
   ResultContext,
 } from './SandboxContexts'
 
-// --- PROVIDER COMPLETO ---
 
 export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -19,7 +18,6 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   const [queryResult, setQueryResult] = useState<DiffResult | null>(null)
   const smsQLctx = useSmsQLIO()
 
-  // Stub della funzione di compilazione che implementerai tu
   const compileAndExecute = (query: string): CompilationResult => {
     fetchModel({ io: smsQLctx.io, query })
       .then(async (fetchedModel) => {
@@ -35,7 +33,6 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
       })
 
     console.log('Esecuzione query in corso...', query)
-    // TODO: Implementare il parsing OHM.js qui
     return { success: true }
   }
 

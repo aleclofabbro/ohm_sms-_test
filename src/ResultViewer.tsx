@@ -8,7 +8,7 @@ export const ResultViewer: React.FC = () => {
   const [viewType, toggleViewType] = useReducer(
     (prev) =>
       prev === 'virtualDiffViewer' ? 'monacoDiffEditor' : 'virtualDiffViewer',
-    'virtualDiffViewer',
+    'monacoDiffEditor',
   )
 
   return (
@@ -28,7 +28,6 @@ export const ResultViewer: React.FC = () => {
             : 'virtualDiffViewer'}
         </button>
       </div>
-      {/* Manteniamo il display flex ma senza altezze percentuali ambigue */}
       <div
         className="panel-content"
         style={{
@@ -44,8 +43,6 @@ export const ResultViewer: React.FC = () => {
               Risultato Query (Diff): {viewType}
             </h4>
 
-            {/* 1. flexGrow: 1 prende lo spazio, position: relative fa da ancora */}
-            {/* 2. textAlign: 'left' forza il ripristino dell'allineamento testo */}
             <div
               style={{
                 flexGrow: 1,
@@ -56,7 +53,6 @@ export const ResultViewer: React.FC = () => {
                 borderRadius: '4px',
               }}
             >
-              {/* 3. position: absolute costringe la libreria a stare nei limiti senza espandere il padre */}
               <div
                 style={{
                   position: 'absolute',

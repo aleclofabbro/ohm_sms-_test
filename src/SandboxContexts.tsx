@@ -1,9 +1,7 @@
-// SandboxContexts.tsx
 import type { AnyObject } from 'mingo/types';
 import { createContext, useContext } from 'react';
 import type { Model } from './ohm/semantic.types';
 
-// --- TIPI ---
 export type CompilationResult = {
   success: true;
   error?: undefined;
@@ -17,7 +15,6 @@ export interface DiffResult {
   after: AnyObject;
 }
 
-// --- CONTESTO DEI RISULTATI ---
 interface ResultContextType {
   model: Model;
   setModel: (data: Model) => void;
@@ -27,14 +24,12 @@ interface ResultContextType {
 
 export const ResultContext = createContext<ResultContextType | undefined>(undefined);
 
-// --- CONTESTO DI COMPILAZIONE OHM ---
 interface OhmCompilerContextType {
   compileAndExecute: (query: string, currentData: AnyObject) => CompilationResult;
 }
 
 export const OhmCompilerContext = createContext<OhmCompilerContextType | undefined>(undefined);
 
-// --- HOOKS CUSTOM ---
 export const useResult = () => {
   const context = useContext(ResultContext);
   if (!context) throw new Error("useResult deve essere usato dentro SandboxProvider");

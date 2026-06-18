@@ -1,4 +1,3 @@
-// SandboxApp.tsx
 import React from 'react';
 import './Sandbox.css';
 import { SandboxProvider } from './SandboxProvider';
@@ -13,7 +12,6 @@ export const SandboxApp: React.FC = () => {
           <h2>SMSQL+ Sandbox</h2>
         </header>
         
-        {/* Griglia a due colonne configurata via CSS */}
         <QueryEditor />
         <ResultViewer />
         

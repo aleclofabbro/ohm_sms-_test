@@ -15,8 +15,6 @@ const smsQLIOContext: SmsQLIOContext = {
         )
       )
       .filter((_): _ is AnyObject => typeof _ === 'object')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map(_ => ({..._, id:(_ as any).id.id}))
       return {
         entities: entities,
       }

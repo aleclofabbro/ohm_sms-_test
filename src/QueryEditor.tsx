@@ -1,13 +1,18 @@
-// QueryEditor.tsx
 import Editor, { type OnMount } from '@monaco-editor/react'; // Richiede npm install @monaco-editor/react
 import React, { useState } from 'react';
 import { useOhmCompiler, useResult } from './SandboxContexts';
 
 export const QueryEditor: React.FC = () => {
   const [query, setQuery] = useState<string>(`
-ON Channel(102052,808,100411,100454,100646,100786,100941,101740,101932)
+ON Channel(215917,210527,215042,215933,210543)
   SET enabled: true
-  ADD paymentConfigurations [{ "enabled": true, "paymentId": "PAYPAL" }]
+  ADD paymentConfigurations [{ "id": "PAYPAL", "enabled": true }, { "id": "MYPAY", "enabled": false } ]
+  UPSERT ticketConfigurations [{ "id": "PDF", "enabled": false }]
+  ON ticketConfigurations(K3_VALUE)
+    SET enabled: false
+  UP
+  REMOVE tagValues(NOPOS)
+  REMOVE tagValues(K3_VALUE)
 `.trim());
   const { compileAndExecute } = useOhmCompiler();
   const { model } = useResult();
@@ -25,7 +30,6 @@ ON Channel(102052,808,100411,100454,100646,100786,100941,101740,101932)
     });
   };
   const handleRun = () => {
-    // Esegue la compilazione tramite il context
     const result = compileAndExecute(query, model);
     if (!result.success) {
       console.error(result.error);
@@ -41,7 +45,7 @@ ON Channel(102052,808,100411,100454,100646,100786,100941,101740,101932)
       <div className="panel-content">
         <Editor
           height="100%"
-          // defaultLanguage="sql" // Puoi definire un linguaggio custom per monaco in futuro
+          // defaultLanguage="sql"
           theme="vs-dark"
           value={query}
           onChange={(value) => setQuery(value || "")}

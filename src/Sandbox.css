@@ -1,7 +1,6 @@
-/* Sandbox.css */
 .sandbox-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 7fr 8fr;
   grid-template-rows: 60px 1fr;
   gap: 16px;
   height: 100vh;

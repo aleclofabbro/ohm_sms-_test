@@ -17,7 +17,7 @@ export function execQuery(query: string, model: Model) {
   })
   const aggregator = new Aggregator(pipeline, {
     context,
-    processingMode: ProcessingMode.CLONE_OFF,
+    processingMode: ProcessingMode.CLONE_ALL,
   })
   const [result] = aggregator.run([model])
   return result
