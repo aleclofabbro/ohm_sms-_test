@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Criteria, Options } from 'mingo/types'
 import type { Modifier, PipelineStage, UpdateConfig } from 'mingo/updater'
 import grammar from './grammar/grammar.ohm-bundle.js'
@@ -356,11 +357,11 @@ mingoSemantics.addOperation('compile(ctx)', {
     return parseInt(this.sourceString, 10)
   },
 
-  PropPath(propName, _dots, propNames) {
+  PropPath(_propName, _dots, _propNames) {
     return this.sourceString
   },
 
-  jsonValue(nodes) {
+  jsonValue(_nodes) {
     let str = this.sourceString
     // Pulisce i commenti in-line " //" eventualmente assorbiti dalla regola greedy e parsa il json
     str = str.replace(/\/\/.*/, '').trim()

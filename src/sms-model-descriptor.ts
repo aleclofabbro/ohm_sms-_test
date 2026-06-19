@@ -1,6 +1,6 @@
-import type { ModelDescriptor, EntityDescriptor } from './ohm/types';
+import type { ModelDescriptor, EntityDescriptor } from './ohm/types'
 
-export const channelDescriptor:EntityDescriptor = {
+export const channelDescriptor: EntityDescriptor = {
   type: 'object',
   idProp: { name: 'id.id' }, // Utilizziamo xmlId come identificatore primitivo primario
   props: {
@@ -29,24 +29,32 @@ export const channelDescriptor:EntityDescriptor = {
         props: { id: { type: 'string' } },
       },
     },
-    
+
     // NOTA SUI RIFERIMENTI CICLICI: parent, parentRef, subchannels, subchannelRefs
     // Se il tuo motore supporta i riferimenti (es. type: 'reference'), puoi usarli.
     // Altrimenti vengono mappati come oggetti base senza espansione infinita.
-    parentRef: { type: 'object' ,props:{id:{type:'string'}}}, 
-    parent: { type: 'object' ,props:{id:{type:'string'}} },
-    
+    parentRef: { type: 'object', props: { id: { type: 'string' } } },
+    parent: { type: 'object', props: { id: { type: 'string' } } },
+
     subchannelRefs: {
       type: 'array',
-      elemDescriptor: { type: 'object', idProp: { name: 'id' }, props:{id:{type:'string'}} },
+      elemDescriptor: {
+        type: 'object',
+        idProp: { name: 'id' },
+        props: { id: { type: 'string' } },
+      },
     },
     subchannels: {
       type: 'array',
-      elemDescriptor: { type: 'object', idProp: { name: 'id' }, props:{id:{type:'string'}} },
+      elemDescriptor: {
+        type: 'object',
+        idProp: { name: 'id' },
+        props: { id: { type: 'string' } },
+      },
     },
-    
+
     type: { type: 'string' },
-    
+
     travelSolutionProfile: {
       type: 'object',
       // idProp: { name: 'id' },
@@ -60,13 +68,13 @@ export const channelDescriptor:EntityDescriptor = {
         id: { type: 'number' },
       },
     },
-    
+
     navigationProfile: {
       type: 'object',
       props: { id: { type: 'string' } },
     },
     direction: { type: 'string' },
-    
+
     tags: {
       type: 'array',
       elemDescriptor: { type: 'number' },
@@ -75,12 +83,12 @@ export const channelDescriptor:EntityDescriptor = {
       type: 'array',
       elemDescriptor: { type: 'string' },
     },
-    
+
     locationId: {
       type: 'object',
       props: { id: { type: 'string' } },
     },
-    
+
     accountingOfficeId: {
       type: 'object',
       props: {
@@ -89,7 +97,7 @@ export const channelDescriptor:EntityDescriptor = {
         ticketCounterId: { type: 'number' },
       },
     },
-    
+
     paymentConfigurations: {
       type: 'array',
       elemDescriptor: {
@@ -101,7 +109,7 @@ export const channelDescriptor:EntityDescriptor = {
         },
       },
     },
-    
+
     ticketConfigurations: {
       type: 'array',
       elemDescriptor: {
@@ -113,22 +121,57 @@ export const channelDescriptor:EntityDescriptor = {
         },
       },
     },
-    
+
     enabled: { type: 'boolean' },
     travelSolutionProfileId: { type: 'number' },
     issuerSaleCompanyId: { type: 'string' },
-    
+
     environments: {
       type: 'array',
       elemDescriptor: { type: 'number' },
     },
-    
+
     creationTimestamp: { type: 'string' },
     lastUpdateTimestamp: { type: 'string' },
   },
-};
+}
 
+const serviceParameterTypeDescriptor: EntityDescriptor = {
+  type: 'object',
+  idProp:{name:'id'},
+  props: {
+    id: { type: 'number' },
+    at_type: { type: 'string' },
+    versionableUuid: { type: 'string' },
+    versionableVersion: { type: 'string' },
+    versionableType: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: 'string' },
+    position: { type: 'number' },
+    validation: { type: 'boolean' },
+    typeDefinition: {
+      type: 'object',
+      props: {
+        enumeration: {
+          type: 'array',
+          elemDescriptor: { type: 'string' },
+        },
+        validationPattern: { type: 'string' },
+        inputPattern: { type: 'string' },
+        minLength: { type: 'number' },
+        maxLength: { type: 'number' },
+        minValue: { type: 'number' },
+        maxValue: { type: 'number' },
+        baseType: { type: 'string' },
+        defaultValue: { type: 'string' },
+      },
+    },
+    tpfCode: { type: 'string' },
+    nameKey: { type: 'string' },
+    hidden: { type: 'boolean' },
+  },
+}
 export const smsModelDescriptor: ModelDescriptor = {
-  Channel: channelDescriptor
-  // ServiceParameterType:{}
-};
+  Channel: channelDescriptor,
+  ServiceParameterType: serviceParameterTypeDescriptor,
+}

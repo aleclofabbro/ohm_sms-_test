@@ -3,6 +3,7 @@ import { useSmsQLIO } from './IOContexts'
 import { execQuery } from './ohm/mingo-exec-query'
 import type { Model } from './ohm/types'
 import {
+  type CompilationResult,
   type DiffResult,
   OhmCompilerContext,
   ResultContext
@@ -16,7 +17,7 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   const [queryResult, setQueryResult] = useState<DiffResult | null>(null)
   const smsQLctx = useSmsQLIO()
 
-  const compileAndExecute = async (query: string)/*: CompilationResult */ => {
+  const compileAndExecute = async (query: string): Promise<CompilationResult>  => {
     execQuery({ query, io: smsQLctx.io, modelDescriptor:smsModelDescriptor })
       .then((qresult) => {
         const fetchedModel = qresult.requireModelResult.model
@@ -28,12 +29,12 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
       .catch((e) => {
         setModel({})
         setQueryResult(null)
-        throw e
+        // throw e
         return { success: false, error: String(e) }
       })
 
     console.log('Esecuzione query in corso...', query)
-    return { success: true }
+    return { success: true}
   }
 
   return (
