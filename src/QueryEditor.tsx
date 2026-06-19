@@ -2,39 +2,53 @@ import Editor, { type OnMount } from '@monaco-editor/react'; // Richiede npm ins
 import React, { useState } from 'react';
 import { useOhmCompiler, useResult } from './SandboxContexts';
 
+// const defaultQuery = `
+// SELECT Channel(215917,210527,215042,215933,210543)
+//   SET enabled = true
+// DONE
+// `
+const defaultQuery = `
+SELECT Channel(215917,210527,215042,215933,210543)
+  SET enabled = true
+  ADD paymentConfigurations = [{ "paymentId": "PAYPAL", "enabled": true }, { "paymentId": "MYPAY", "enabled": false } ]
+  UPSERT ticketConfigurations = [{ "ticketDocumentType": "K3_VALUE", "enabled": false }]
+  
+  SELECT ticketConfigurations("K3_VALUE")
+    SET enabled = false
+  DONE
+  
+  REMOVE tagValues("PLUS")
+  REMOVE tagValues("K3_VALUE")
+  ADD tagValues = ["XXXXXXX"]
+DONE
+
+SELECT Channel(215917, 215042)
+  SET accountingOfficeId.accountingOfficeId = 11111111
+DONE 
+`
 export const QueryEditor: React.FC = () => {
-  const [query, setQuery] = useState<string>(`
-ON Channel(215917,210527,215042,215933,210543)
-  SET enabled: true
-  ADD paymentConfigurations [{ "id": "PAYPAL", "enabled": true }, { "id": "MYPAY", "enabled": false } ]
-  UPSERT ticketConfigurations [{ "id": "PDF", "enabled": false }]
-  ON ticketConfigurations(K3_VALUE)
-    SET enabled: false
-  UP
-  REMOVE tagValues(NOPOS)
-  REMOVE tagValues(K3_VALUE)
-`.trim());
+  const [query, setQuery] = useState<string>(defaultQuery.trim());
   const { compileAndExecute } = useOhmCompiler();
-  const { model } = useResult();
+  //const { model } = useResult();
+  async function handleRun  () {
+    const result =await compileAndExecute(query/* , model */);
+    if (!result.success) {
+      console.error(result.error);
+    }
+  }
   const handleEditorDidMount:OnMount = (editor, monaco) => {
     // Add the keybinding action
     editor.addAction({
       id: 'submit-code',
       label: 'Submit Query',
       keybindings: [ monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter ],
-      run: (ed) => {
-        const query = ed.getValue();
-        compileAndExecute(query,model)
-        // Add your custom logic here (e.g., submit form, run code)
+      run: (/* ed */) => {
+//        const query = ed.getValue();
+        handleRun()
       },
     });
   };
-  const handleRun = () => {
-    const result = compileAndExecute(query, model);
-    if (!result.success) {
-      console.error(result.error);
-    }
-  };
+  
 
   return (
     <div className="panel">

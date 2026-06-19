@@ -1,15 +1,13 @@
 import React, { type ReactNode, useState } from 'react'
 import { useSmsQLIO } from './IOContexts'
-import { fetchModel } from './ohm/fetch-required-entities'
 import { execQuery } from './ohm/mingo-exec-query'
 import type { Model } from './ohm/types'
 import {
-  type CompilationResult,
   type DiffResult,
   OhmCompilerContext,
-  ResultContext,
+  ResultContext
 } from './SandboxContexts'
-
+import { smsModelDescriptor } from './sms-model-descriptor'
 
 export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -18,17 +16,19 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   const [queryResult, setQueryResult] = useState<DiffResult | null>(null)
   const smsQLctx = useSmsQLIO()
 
-  const compileAndExecute = (query: string): CompilationResult => {
-    fetchModel({ io: smsQLctx.io, query })
-      .then(async (fetchedModel) => {
+  const compileAndExecute = async (query: string)/*: CompilationResult */ => {
+    execQuery({ query, io: smsQLctx.io, modelDescriptor:smsModelDescriptor })
+      .then((qresult) => {
+        const fetchedModel = qresult.requireModelResult.model
+
         setModel(fetchedModel)
-        const qresult = await execQuery(query, fetchedModel)
-        setQueryResult({after: qresult,before: fetchedModel})
+        setQueryResult({ after: qresult.updatedModel, before: fetchedModel })
         return fetchedModel
       })
       .catch((e) => {
         setModel({})
         setQueryResult(null)
+        throw e
         return { success: false, error: String(e) }
       })
 

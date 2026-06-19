@@ -3,7 +3,6 @@ import type { Modifier, PipelineStage, UpdateConfig } from 'mingo/updater'
 import grammar from './grammar/grammar.ohm-bundle.js'
 import type {
   _any,
-  EntityIds,
   ModelDescriptor,
   SelectedEntities,
 } from './types.js'
@@ -35,10 +34,8 @@ export type CompileQueryEntityResult = {
 }
 
 // Interfaccia interna per il contesto di esecuzione della Semantic Action
-type CompileContext = {
+type CompileContext = CompileQueryResult & {
   modelDescriptor: ModelDescriptor
-  selectedEntities: SelectedEntities
-  results: CompileQueryEntityResult[]
   rootEntityName: string | null
   currentPath: string
   arrayFilters: _any[]
@@ -128,7 +125,9 @@ mingoSemantics.addOperation('compile(ctx)', {
       if (!ctx.selectedEntities[entityKey]) {
         ctx.selectedEntities[entityKey] = { ids: [] }
       }
-      ctx.selectedEntities[entityKey].ids.push(...ids)
+      
+      ctx.selectedEntities[entityKey].ids.push(...ids.filter(id=>!ctx.selectedEntities[entityKey].ids.includes(id)))
+      
 
       const rootPipeline: EntityOperation[] = []
       const rootCtx: CompileContext = {
@@ -223,16 +222,95 @@ mingoSemantics.addOperation('compile(ctx)', {
     const elements = Array.isArray(val) ? val : [val]
     const targetPath = ctx.currentPath ? `${ctx.currentPath}.${prop}` : prop
 
-    // Per gestire le Primitive in modo lineare come da specifica usa addToSet
-    ctx.pipeline.push({
-      operation: this.sourceString.trim(),
-      condition: {},
-      modifier: { $addToSet: { [targetPath]: { $each: elements } } },
-      updateConfig:
-        ctx.arrayFilters.length > 0
-          ? { arrayFilters: ctx.arrayFilters }
-          : undefined,
-    })
+    const cleanPath = targetPath.replace(/\.\$\[[^\]]+\]/g, '')
+    const idProp = getIdPropForPath(
+      ctx.modelDescriptor,
+      ctx.rootEntityName,
+      cleanPath,
+    )
+
+    if (!idProp) {
+      // Array di primitive
+      ctx.pipeline.push({
+        operation: this.sourceString.trim(),
+        condition: {},
+        modifier: { $addToSet: { [targetPath]: { $each: elements } } },
+        updateConfig:
+          ctx.arrayFilters.length > 0
+            ? { arrayFilters: ctx.arrayFilters }
+            : undefined,
+      })
+      return
+    }
+
+    // Array di oggetti: pattern PATCH (atomico per proprietà) + ADD condizionale
+    for (const newEl of elements) {
+      const elId = newEl[idProp]
+      if (elId === undefined) continue // Salta se manca la chiave primaria
+
+      const safeId = String(elId).replace(/[^a-zA-Z0-9]/g, '_')
+      const upsertAlias = `upsert_alias_${safeId}`
+
+      // ==== 1. PATCH OP ====
+      // Scomponiamo il $set in singole operazioni per ingannare il bug del
+      // conflict-detector di Mingo, ignorando la proprietà identificativa stessa.
+      for (const [k, v] of Object.entries(newEl)) {
+        if (k === idProp) continue
+
+        ctx.pipeline.push({
+          operation: `PATCH ${k} part of UPSERT ${elId}`,
+          condition: {},
+          modifier: { $set: { [`${targetPath}.$[${upsertAlias}].${k}`]: v } },
+          updateConfig: {
+            arrayFilters: [
+              ...ctx.arrayFilters,
+              { [`${upsertAlias}.${idProp}`]: elId },
+            ],
+          },
+        })
+      }
+
+      // ==== 2. ADD OP ====
+      let addCondition = {}
+      let addArrayFilters = [...ctx.arrayFilters]
+
+      // Cerchiamo se c'è un alias genitore nella dot-notation
+      const aliasRegex = /\$\[([a-zA-Z0-9_]+)\](?!.*\$\[)/
+      const match = targetPath.match(aliasRegex)
+
+      if (match) {
+        // Target innestato: alteriamo il filtro del genitore
+        const parentAlias = match[1]
+        const splitParts = targetPath.split(`$[${parentAlias}]`)
+        const relativePath = splitParts[1]
+
+        addArrayFilters = addArrayFilters.map((filter) => {
+          const isAliasFilter = Object.keys(filter).some(
+            (k) => k.startsWith(parentAlias + '.') || k === parentAlias,
+          )
+          if (isAliasFilter) {
+            return {
+              ...filter,
+              [`${parentAlias}${relativePath}.${idProp}`]: { $ne: elId },
+            }
+          }
+          return filter
+        })
+      } else {
+        // Target radice
+        addCondition = { [`${targetPath}.${idProp}`]: { $ne: elId } }
+      }
+
+      ctx.pipeline.push({
+        operation: `ADD part of UPSERT ${elId}`,
+        condition: addCondition,
+        modifier: { $push: { [targetPath]: newEl } },
+        updateConfig:
+          addArrayFilters.length > 0
+            ? { arrayFilters: addArrayFilters }
+            : undefined,
+      })
+    }
   },
 
   RemoveStmt(_kw, propPathNode, _l, idListNode, _r, _eol) {
@@ -293,10 +371,11 @@ mingoSemantics.addOperation('compile(ctx)', {
 export function compileQuery({
   query,
   modelDescriptor,
-}: CompileQueryArg): CompileQueryResult {
+}: CompileQueryArg): CompileContext {
   const match = grammar.match(query)
 
   if (match.failed()) {
+    console.error(match)
     throw new Error(`Parse error: ${match.message}`)
   }
 
@@ -311,9 +390,6 @@ export function compileQuery({
   }
 
   mingoSemantics(match).compile(ctx)
-
-  return {
-    selectedEntities: ctx.selectedEntities,
-    results: ctx.results,
-  }
+  console.log({ ctx })
+  return ctx
 }
