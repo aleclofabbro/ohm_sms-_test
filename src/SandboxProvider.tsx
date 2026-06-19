@@ -1,8 +1,8 @@
 import React, { type ReactNode, useState } from 'react'
 import { useSmsQLIO } from './IOContexts'
-import { fetchModel } from './ohm/fetchModel'
-import { execQuery } from './ohm/semantic.mingo.execQuery'
-import type { Model } from './ohm/semantic.types'
+import { fetchModel } from './ohm/fetch-required-entities'
+import { execQuery } from './ohm/mingo-exec-query'
+import type { Model } from './ohm/types'
 import {
   type CompilationResult,
   type DiffResult,

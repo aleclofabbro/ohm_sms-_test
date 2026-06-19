@@ -6,7 +6,7 @@ import type { AnyObject } from 'mingo/types'
 
 const smsQLIOContext: SmsQLIOContext = {
   io: {
-    async fetchEntitiesById({ ids, name }) {
+    async requireModel({ ids, name }) {
       const entities = (
         await Promise.all(
           ids.map((id) =>

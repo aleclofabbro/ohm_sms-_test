@@ -12,28 +12,34 @@ import {
 } from 'ohm-js';
 
 export interface CustomQueryLanguageActionDict<T> extends BaseActionDict<T> {
-  Query?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode) => T;
-  Statement_SetOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  Statement_AddOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  Statement_UpsertOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  Statement_RemoveOp?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  Statement_NestedBlock?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  Program?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  StatementSequence?: (this: NonterminalNode, arg0: IterationNode) => T;
   Statement?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  NestedBlock?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode, arg2: TerminalNode) => T;
-  Target?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
-  SetOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode) => T;
-  AddOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
-  UpsertOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
-  RemoveOp?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
-  path?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  ident?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode) => T;
-  idRaw?: (this: NonterminalNode, arg0: IterationNode) => T;
-  jsonMock?: (this: NonterminalNode, arg0: IterationNode) => T;
+  SelectBlock?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode, arg5: NonterminalNode, arg6: NonterminalNode, arg7: NonterminalNode, arg8: NonterminalNode) => T;
+  SetStmt?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode) => T;
+  AddStmt?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode) => T;
+  UpsertStmt?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode) => T;
+  RemoveStmt?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode, arg5: NonterminalNode) => T;
+  IdList?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  Id?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  StringId?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode, arg2: TerminalNode) => T;
+  IntId?: (this: NonterminalNode, arg0: IterationNode, arg1: IterationNode) => T;
+  PropPath?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode, arg2: IterationNode) => T;
+  PropName?: (this: NonterminalNode, arg0: NonterminalNode | TerminalNode, arg1: IterationNode) => T;
+  jsonValue?: (this: NonterminalNode, arg0: IterationNode) => T;
+  KwSelect?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  KwSet?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  KwAdd?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  KwUpsert?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  KwRemove?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  KwDone?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  identifierPart?: (this: NonterminalNode, arg0: NonterminalNode | TerminalNode) => T;
   space?: (this: NonterminalNode, arg0: NonterminalNode | TerminalNode) => T;
-  comment_sql?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode) => T;
-  comment_jsLine?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode) => T;
-  comment_jsBlock?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode, arg2: TerminalNode) => T;
   comment?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  multiLineComment?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode, arg2: TerminalNode) => T;
+  singleLineComment?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode) => T;
+  nl?: (this: NonterminalNode, arg0: IterationNode, arg1: TerminalNode) => T;
+  eol?: (this: NonterminalNode, arg0: NonterminalNode) => T;
 }
 
 export interface CustomQueryLanguageSemantics extends Semantics {

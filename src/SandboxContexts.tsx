@@ -1,6 +1,6 @@
 import type { AnyObject } from 'mingo/types';
 import { createContext, useContext } from 'react';
-import type { Model } from './ohm/semantic.types';
+import type { Model } from './ohm/types';
 
 export type CompilationResult = {
   success: true;
