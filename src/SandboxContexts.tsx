@@ -1,6 +1,6 @@
 import type { AnyObject } from 'mingo/types';
 import { createContext, useContext } from 'react';
-import type { Model } from './ohm/semantic.types';
+import type { Model } from './ohm/types';
 
 export type CompilationResult = {
   success: true;
@@ -24,8 +24,8 @@ interface ResultContextType {
 
 export const ResultContext = createContext<ResultContextType | undefined>(undefined);
 
-interface OhmCompilerContextType {
-  compileAndExecute: (query: string, currentData: AnyObject) => CompilationResult;
+export interface OhmCompilerContextType {
+  compileAndExecute: (query: string/* , currentData: AnyObject */) => Promise<CompilationResult>;
 }
 
 export const OhmCompilerContext = createContext<OhmCompilerContextType | undefined>(undefined);

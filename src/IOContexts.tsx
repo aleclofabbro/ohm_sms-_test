@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { IO } from './ohm/semantic.types';
+import type { IO } from './ohm/types';
 
 export type SmsQLIOContext = {
   io:IO

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import path from 'path'
-import { entityFileReader } from './src/ohm/fetch-local-fs/entityFileReader._.test'
+import { entityFileReader } from './src/fetch-local-fs/entityFileReader._.test'
 // https://vite.dev/config/
 export default defineConfig({
   build: {

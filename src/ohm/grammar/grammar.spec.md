@@ -1,116 +1,82 @@
-Ecco il documento di specifica funzionale, strutturato per essere chiaro, esaustivo e accessibile anche a chi non ha familiarità diretta con il codice di parsing OHM.js.
+Ecco il documento di specifica formale della grammatica, strutturato appositamente per guidare lo sviluppo del motore semantico.
 
 ---
 
-# Documento di Specifica Funzionale: Custom Entity Query Language
+# Documento di Specifica: Custom Query Language (CQL)
 
-## 1. Scopo del Linguaggio
+Questo documento definisce le regole sintattiche e le direttive architetturali per l'implementazione semantica del Custom Query Language, orientato alla mutazione di entità JSON-like.
 
-Il **Custom Entity Query Language** è un linguaggio testuale dichiarativo progettato per eseguire mutazioni mirate (aggiornamenti, inserimenti e rimozioni) su entità dati complesse e gerarchiche.
+## 1. Regole Generali e Lessicali
 
-Il linguaggio permette di selezionare entità o sotto-elementi tramite identificatori univoci e di applicare trasformazioni alle loro proprietà o alle liste a essi associate, supportando la navigazione ricorsiva all'interno delle strutture dati.
+Prima di implementare le operazioni, il motore semantico deve tenere in considerazione le seguenti regole base imposte dal parser:
 
----
-
-## 2. Architettura di Base
-
-Una query è composta da due elementi fondamentali:
-
-1. **Dichiarazione del Target (`ON`)**: Definisce su quali entità o sotto-elementi agiranno i comandi successivi.
-2. **Dichiarazione delle Operazioni**: Una serie di istruzioni mutazionali (`SET`, `ADD`, `UPSERT`, `REMOVE`), scritte sequenzialmente e separate da ritorni a capo (`\n`).
+* **Case-Insensitivity:** Le parole chiave (`SELECT`, `SET`, `ADD`, `UPSERT`, `REMOVE`, `DONE`) sono case-insensitive. Il parser le riconoscerà indipendentemente dal formato.
+* **Spazi e Tabulazioni:** Vengono ignorati. Il parser non è sensibile all'indentazione.
+* **Terminazione di Riga:** Il carattere "a capo" (`\n`) è **strutturale**. Agisce come terminatore implicito per tutte le istruzioni di mutazione (`SET`, `ADD`, `UPSERT`). Non è consentito avere più istruzioni sulla stessa riga.
+* **Commenti:** I commenti in linea (`//`) e multiriga (`/* ... */`) vengono assorbiti a livello lessicale e ignorati, eccetto quando posti a fine riga dopo un'assegnazione (vedi sezione *Valori e Parsing JSON*).
 
 ---
 
-## 3. Regole di Selezione (Targeting)
+## 2. Blocchi di Contesto: `SELECT` e `DONE`
 
-### 3.1 Identificatori (ID)
+Il linguaggio è basato su blocchi contestuali che definiscono il target delle mutazioni successive.
 
-Gli ID utilizzati per selezionare entità o elementi di liste sono passati in formato grezzo (senza apici) e separati da virgole. Possono contenere lettere, numeri, trattini (`-`) e underscore (`_`).
+### Entity-Level Target (Radice)
 
-* **Valido:** `user_01`, `123-abc`, `admin`
-* **Sintassi:** `ON Entita(id1, id2, id3)`
+Definisce l'entità principale su cui operare.
 
-### 3.2 Selezione Root (Livello Principale)
+* **Sintassi:** `SELECT EntityName("id1", "id2", ...)` ... `DONE`
+* **Azione Semantica:** Il motore deve recuperare dal database le entità specificate dalla lista di ID. Tutte le istruzioni interne al blocco si applicano in batch a tutte le entità selezionate.
 
-Ogni query deve aprirsi selezionando l'entità principale.
+### Nested Sub-Targeting (Interno)
 
-> `ON User(user_01, user_02)`
+Definisce un target secondario all'interno di un array appartenente all'entità radice.
 
-### 3.3 Selezione Annidata e Ritorno di Scope (`UP`)
-
-È possibile "entrare" all'interno di una lista appartenente all'entità genitore per operare direttamente sui suoi elementi. Per terminare le operazioni sull'elemento annidato e tornare al livello genitore, si utilizza la keyword isolata `UP`.
-
-> `ON friends(friend_01)`
-> *...operazioni sul friend_01...*
-> `UP`
+* **Sintassi:** `SELECT property.path("id_A", 2)` ... `DONE`
+* **Azione Semantica:** Il motore deve individuare l'array specificato dal `property.path`. Successivamente, deve filtrare gli elementi interni all'array che corrispondono agli ID forniti e applicare le mutazioni interne al blocco solo a quegli elementi specifici.
 
 ---
 
-## 4. Operazioni di Mutazione
+## 3. Istruzioni di Mutazione
 
-I nomi dei campi o delle proprietà da modificare devono essere stringhe alfanumeriche. I valori associati alle operazioni (`fieldValue`) sono interpretati come stringhe JSON valide che catturano tutto il contenuto fino al termine della riga corrente.
+Queste istruzioni si trovano all'interno di un blocco `SELECT` e definiscono le modifiche da applicare al target corrente (Entità radice o Sub-target).
 
-### 4.1 Assegnazione (`SET`)
-
-Imposta o sovrascrive il valore di una singola proprietà. È supportata la **dot-notation** per aggiornare proprietà annidate di tipo oggetto. È consentita una sola operazione `SET` per riga.
-
-* **Sintassi:** `SET nomeCampo: valoreJSON`
-* **Esempio:** `SET contacts.email: "info@example.com"`
-
-### 4.2 Inserimento in Liste (`ADD`)
-
-Aggiunge nuovi elementi all'interno di una proprietà di tipo lista/array.
-
-* **Sintassi:** `ADD nomeCampo arrayJSON`
-* **Esempio:** `ADD tags ["premium", "verified"]`
-
-### 4.3 Inserimento/Aggiornamento in Liste (`UPSERT`)
-
-Esegue un'operazione di *upsert* su una lista. Se l'elemento esiste già (sulla base del suo ID), viene aggiornato; altrimenti viene aggiunto.
-
-* **Sintassi:** `UPSERT nomeCampo arrayJSON`
-* **Esempio:** `UPSERT roles [{"id": "r1", "name": "editor"}]`
-
-### 4.4 Rimozione da Liste (`REMOVE`)
-
-Rimuove elementi specifici da una proprietà di tipo lista, utilizzando i loro identificatori esatti.
-
-* **Sintassi:** `REMOVE nomeCampo(id1, id2)`
-* **Esempio:** `REMOVE tags(obsolete, temporary)`
+| Comando | Sintassi Esempio | Comportamento Semantico Richiesto |
+| --- | --- | --- |
+| **`SET`** | `SET prop.path = value` | Sovrascrive il valore alla fine del `prop.path`. Se il percorso non esiste, lo crea. Sostituisce interamente gli array se `value` è un array. |
+| **`ADD`** | `ADD arrayProp = [...]` | Aggiunge uno o più elementi all'array specificato. Se l'array non esiste, deve essere inizializzato. Genera un errore semantico se `arrayProp` esiste ma non è un array. |
+| **`UPSERT`** | `UPSERT arrayProp = [...]` | Inserisce i nuovi elementi; se un elemento con lo stesso identificatore esiste già nell'array, lo aggiorna/sostituisce. |
+| **`REMOVE`** | `REMOVE arrayProp("id1")` | Rimuove dall'array gli elementi i cui identificatori corrispondono a quelli passati tra parentesi. Ignora gli ID non trovati. |
 
 ---
 
-## 5. Commenti e Documentazione
+## 4. Identificatori e Percorsi (Left-Hand Side)
 
-Il linguaggio supporta l'inserimento di commenti per documentare le query, ignorati dal motore di esecuzione:
+La parte a sinistra del segno di uguale (`=`) definisce la destinazione della mutazione.
 
-* **Commento su riga singola (stile SQL):** `-- Questo è un commento`
-* **Commento su riga singola (stile JS):** `// Questo è un commento`
-* **Commento multi-riga:** `/* Questo è un blocco di commento */`
+* **Identificatori Validi:** Iniziano con una lettera o un underscore (`_`), seguiti da caratteri alfanumerici o underscore. (es. `status`, `_metadata_2`). Non contengono spazi e non vanno virgolettati.
+* **Dot-Notation (`PropPath`):** Gli identificatori possono essere concatenati con un punto (`.`) per navigare oggetti annidati (es. `config.network.timeout`).
+* **Responsabilità Semantica:** Se un'istruzione punta a `a.b.c = 10` e `a.b` è attualmente `null` o non definito, il motore semantico dovrebbe istanziare oggetti vuoti lungo il percorso prima di assegnare il valore finale.
 
 ---
 
-## 6. Esempio Completo di Flusso
+## 5. Valori e Parsing JSON (Right-Hand Side)
 
-Di seguito un caso d'uso che illustra l'intera capacità espressiva del linguaggio:
+La parte a destra del segno di uguale (`=`) per i comandi `SET`, `ADD` e `UPSERT` è gestita dalla grammatica come uno **Stub Lessicale**.
 
-```text
-/* Esempio di aggiornamento di un Ordine e dei suoi elementi */
+* **Comportamento del Parser:** OHM.js cattura *qualsiasi carattere* presente dopo il segno `=` fino alla fine della riga (`\n`).
+* **Responsabilità Semantica:** 1. Il motore semantico riceverà una stringa grezza (es. `{"tagline": "Hello", points: 30} // note`).
+2. Il motore **deve** implementare una logica di sanitizzazione (es. rimuovere eventuali commenti `//` rimasti in coda alla stringa).
+3. Il motore **deve** parsare la stringa tramite un parser JSON/JSON5 per ottenere l'oggetto o l'array JavaScript reale da applicare.
 
-ON Order(order_999)
-  -- 1. Aggiorna campi base tramite assegnazione e dot-notation
-  SET status: "shipped"
-  SET delivery.address.zip: "10100"
-  
-  // 2. Aggiunge nuovi log all'array history
-  ADD history [ {"event": "dispatched", "time": "2023-10-25"} ]
-  
-  -- 3. Entra in un sotto-contesto per modificare elementi specifici della lista 'items'
-  ON items(item_01, item_03)
-    SET isGift: true
-  UP
-  
-  // 4. Tornato al livello Order, rimuove eventuali codici promozionali obsoleti
-  REMOVE promoCodes(summer_sale)
+---
 
-```
+## 6. Identificatori di Targeting (ID)
+
+Sia nei blocchi `SELECT` che nel comando `REMOVE`, le entità e gli elementi degli array sono targettizzati tramite ID passati tra parentesi.
+
+* **Tipi Supportati:** * **Stringhe:** Devono essere sempre delimitate da doppi apici (es. `"user_1"`).
+* **Interi:** Numeri positivi o negativi senza apici (es. `42`, `-7`).
+
+
+* **Multi-ID:** I comandi accettano una lista separata da virgole (es. `("id1", "id2")`). Il motore semantico deve iterare su questa lista per applicare l'operazione in batch.

@@ -6,18 +6,20 @@ import type { AnyObject } from 'mingo/types'
 
 const smsQLIOContext: SmsQLIOContext = {
   io: {
-    async fetchEntitiesById({ ids, name }) {
-      const entities = (
-        await Promise.all(
-          ids.map((id) =>
-            fetch(`/_/${name}/${id}`).then((resp) => resp.json()),
-          ),
-        )
+    async requireModel({ selectedEntities }) {
+      const entityEntries = await Promise.all(
+        Object.entries(selectedEntities).map(async ([entityName, selected]) => {
+          const collection = (
+            await Promise.all(
+              selected.ids.map((id) =>
+                fetch(`/_/${entityName}/${id}`).then((resp) => resp.json()),
+              ),
+            )
+          ).filter((_): _ is AnyObject => typeof _ === 'object')
+          return [entityName, collection] as const
+        }),
       )
-      .filter((_): _ is AnyObject => typeof _ === 'object')
-      return {
-        entities: entities,
-      }
+      return { model: Object.fromEntries(entityEntries) }
     },
   },
 }

@@ -19,8 +19,9 @@ export async function entityFileReaderStr({ id, name, basePath }: arg) {
 }
 export async function entityFileReader({ id, name, basePath }: arg) {
   const object = JSON.parse(await entityFileReaderStr({ basePath, id, name }))
-  object.id = object.id.id
-  return ________________________REFACTOR_ARRAY_ITEMS(object)
+  // object.id = object.id.id
+  // return ________________________REFACTOR_ARRAY_ITEMS(object)
+  return object
 }
 
 function ________________________REFACTOR_ARRAY_ITEMS(object: any) {
