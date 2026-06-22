@@ -2,13 +2,15 @@ import type { AnyObject } from 'mingo/types';
 import { createContext, useContext } from 'react';
 import type { Model } from './ohm/types';
 
-export type CompilationResult = {
-  success: true;
-  error?: undefined;
-}|{
-  success: false;
-  error: string;
-}
+export type CompilationResult =
+  | {
+      success: true
+      error?: undefined
+    }
+  | {
+      success: false
+      error: unknown
+    }
 
 export interface DiffResult {
   before: AnyObject;

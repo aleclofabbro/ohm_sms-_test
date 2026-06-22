@@ -1,6 +1,5 @@
 import React, { type ReactNode, useState } from 'react'
 import { useSmsQLIO } from './IOContexts'
-import { execQuery } from './ohm/mingo-exec-query'
 import type { Model } from './ohm/types'
 import {
   type CompilationResult,
@@ -9,6 +8,7 @@ import {
   ResultContext
 } from './SandboxContexts'
 import { smsModelDescriptor } from './sms-model-descriptor'
+import { execQueryRadashi } from './ohm/radashi-engine'
 
 export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -17,24 +17,27 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   const [queryResult, setQueryResult] = useState<DiffResult | null>(null)
   const smsQLctx = useSmsQLIO()
 
-  const compileAndExecute = async (query: string): Promise<CompilationResult>  => {
-    execQuery({ query, io: smsQLctx.io, modelDescriptor:smsModelDescriptor })
-      .then((qresult) => {
-        const fetchedModel = qresult.requireModelResult.model
-
-        setModel(fetchedModel)
-        setQueryResult({ after: qresult.updatedModel, before: fetchedModel })
-        return fetchedModel
+  const compileAndExecute = (query: string): Promise<CompilationResult> => {
+    console.log('Esecuzione query in corso...', query)
+    return execQueryRadashi({
+      query,
+      io: smsQLctx.io,
+      modelDescriptor: smsModelDescriptor,
+    })
+      .then<CompilationResult>((qresult) => {
+        setModel(qresult.model.before)
+        setQueryResult({
+          after: qresult.model.after,
+          before: qresult.model.before,
+        })
+        return { success: true }
       })
-      .catch((e) => {
+      .catch<CompilationResult>((e) => {
         setModel({})
         setQueryResult(null)
         // throw e
-        return { success: false, error: String(e) }
+        return { success: false, error: e }
       })
-
-    console.log('Esecuzione query in corso...', query)
-    return { success: true}
   }
 
   return (

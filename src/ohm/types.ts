@@ -1,27 +1,38 @@
-import type { AnyObject } from 'mingo/types'
-import type { CompileQueryResult } from './mingo-semantic'
+// ==========================================
+// 1. Model, Entities, Collections
+// ==========================================
 
-// Model, Entities, Collections
-export type EntityCollection = AnyObject[]
-export type Model = {
-  [entityName in string]: EntityCollection
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type _any = any
+export type Entity = Record<string, _any>
+
+export type EntityCollection = Entity[]
 export type EntityId = string | number
-export type EntityIds = string[] | number[]
+export type EntityIds = EntityId[]
 
 export type ModelDescriptor = {
-  [entityName in string]: EntityDescriptor
+  [entityName: string]: EntityDescriptor
 }
+
+export type Model = {
+  [entityName: string]: Entity[]
+}
+
 export type EntityDescriptor = IdentifiableObjectDescriptor
 
-// Values
+// ==========================================
+// 2. Value Descriptors
+// ==========================================
+
 export type ValueDescriptor =
   | PrimitiveDescriptor
   | ObjectDescriptor
   | ArrayDescriptor
+
 export type PrimitiveDescriptor = {
   type: 'number' | 'string' | 'boolean'
 }
+
 export type ArrayDescriptor = {
   type: 'array'
   elemDescriptor: IdentifiableObjectDescriptor | PrimitiveDescriptor
@@ -29,39 +40,89 @@ export type ArrayDescriptor = {
 
 type _WithObjectProps = {
   props: {
-    [propName in string]: ValueDescriptor
+    [propName: string]: ValueDescriptor
   }
 }
+
 export type ObjectDescriptor = _WithObjectProps & {
   type: 'object'
 }
+
 export type IdentifiableObjectDescriptor = ObjectDescriptor & {
   idProp: {
     name: string
   }
 }
 
-// quali id entita' sono state selzionate nella query 
-export type SelectedEntities = {
-  [entityName in string]: {
-    ids: EntityIds
-  }
+// ==========================================
+// 3. IO & Fetching
+// ==========================================
+
+export type RequireModelIO = {
+  requiredModel: RequiredModel
+}
+export type RequiredModel = {
+  [entityName: string]: EntityId[]
 }
 
-
-// IO
-export type ModelRequirements = Pick<CompileQueryResult,'selectedEntities'>
 export type IO = {
-  requireModel: (_: ModelRequirements) => Promise<RequireModelResult>
+  requireModel: (_: RequireModelIO) => Promise<RequireModelResult>
 }
+
 export type RequireModelResult = {
   model: Model
-  // notAvailable: {
+  // unvailable: {
   //   [entityName in string]: {
   //     id: EntityId
   //   }
   // }[]
 }
-//
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type _any = any
+
+// ==========================================
+// 4. AST (Abstract Syntax Tree) - OHM Output
+// ==========================================
+
+export type BaseCommand = {
+  sourceString: string
+}
+
+export type SelectCommand = BaseCommand & {
+  type: 'SELECT'
+  target: string
+  targetIds: EntityIds
+}
+
+export type ValueMutationCommand = BaseCommand & {
+  type: 'SET' | 'ADD' | 'UPSERT'
+  path: string
+  value: _any
+}
+
+export type RemoveCommand = BaseCommand & {
+  type: 'REMOVE'
+  path: string
+  targetIds: EntityIds
+}
+
+export type Command = ValueMutationCommand | RemoveCommand
+
+export type CompileQueryBlock = {
+  type: 'CompileQueryBlock'
+  query: string
+  select: SelectCommand
+  commands: (Command | CompileQueryBlock)[]
+}
+
+export type CompileQueryResult = {
+  queries: CompileQueryBlock[]
+}
+
+// ==========================================
+// 5. Execution Pipeline - Radashi Engine
+// ==========================================
+
+export type OperationThunk = () => Promise<unknown> | unknown
+
+export type CommandThunk = Command & {
+  execute: OperationThunk
+}
