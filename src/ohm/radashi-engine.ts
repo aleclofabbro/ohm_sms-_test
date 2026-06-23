@@ -1,12 +1,9 @@
 import { get, set, unique } from 'radashi'
-import { executeQuery, type CommandEngine } from './exec-query'
-import { compileQuery } from './semantic'
+import { type CommandEngine } from './exec-query'
 import type {
   Command,
   CommandThunk,
   Entity,
-  IO,
-  ModelDescriptor,
   SelectCommand,
   _any,
 } from './types'
@@ -180,21 +177,4 @@ function extractId(item: unknown): string | number | undefined {
   return undefined
 }
 
-export async function execQueryRadashi({
-  query,
-  modelDescriptor,
-  io,
-}: {
-  query: string
-  io: IO
-  modelDescriptor: ModelDescriptor
-}) {
-  const compileQueryResult = compileQuery(query, modelDescriptor)
-  const execResult = await executeQuery(
-    compileQueryResult,
-    io,
-    radashiCommandEngine,
-    modelDescriptor,
-  )
-  return execResult
-}
+

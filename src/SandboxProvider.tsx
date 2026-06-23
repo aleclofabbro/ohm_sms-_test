@@ -8,7 +8,8 @@ import {
   ResultContext
 } from './SandboxContexts'
 import { smsModelDescriptor } from './sms-model-descriptor'
-import { execQueryRadashi } from './ohm/radashi-engine'
+import { executeQuery } from './ohm/exec-query'
+import { radashiCommandEngine } from './ohm/radashi-engine'
 
 export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -19,10 +20,11 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
 
   const compileAndExecute = (query: string): Promise<CompilationResult> => {
     console.log('Esecuzione query in corso...', query)
-    return execQueryRadashi({
+    return executeQuery({
       query,
       io: smsQLctx.io,
       modelDescriptor: smsModelDescriptor,
+      engine: radashiCommandEngine,
     })
       .then<CompilationResult>((qresult) => {
         setModel(qresult.model.before)

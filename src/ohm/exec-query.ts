@@ -12,6 +12,7 @@ import type {
   RequiredModel,
   SelectCommand,
 } from './types'
+import { compileQuery } from './semantic'
 
 /**
  * Contratto che il modulo di esecuzione (es. radashi-engine) deve rispettare.
@@ -31,16 +32,27 @@ export type ExecResult = {
     before: Model
     after: Model
   }
+  compile: {
+    result: CompileQueryResult
+  }
 }
+type executeQueryArg = {
+  query: string
+  io: IO
+  engine: CommandEngine
+  modelDescriptor: ModelDescriptor
+}
+
 /**
  * Esegue il risultato della compilazione iterando sui blocchi SELECT.
  */
-export async function executeQuery(
-  compileQueryResult: CompileQueryResult,
-  io: IO,
-  engine: CommandEngine,
-  modelDescriptor: ModelDescriptor,
-): Promise<ExecResult> {
+export async function executeQuery({
+  io,
+  query,
+  engine,
+  modelDescriptor,
+}: executeQueryArg): Promise<ExecResult> {
+  const compileQueryResult = compileQuery(query, modelDescriptor)
   const requiredModel = compileQueryResult.queries.reduce<RequiredModel>(
     (acc, compileQueryBlock) => {
       const requiredEntityName = compileQueryBlock.select.target
@@ -86,6 +98,9 @@ Dettaglio: ${(error as Error).message}
     }
   }
   return {
+    compile: {
+      result: compileQueryResult,
+    },
     model: {
       after,
       before,

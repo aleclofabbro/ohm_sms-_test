@@ -15,7 +15,7 @@ export type ModelDescriptor = {
 }
 
 export type Model = {
-  [entityName: string]: Entity[]
+  [entityName: string]: EntityCollection
 }
 
 export type EntityDescriptor = IdentifiableObjectDescriptor
@@ -35,11 +35,11 @@ export type PrimitiveDescriptor = {
 
 export type ArrayDescriptor = {
   type: 'array'
-  elemDescriptor: IdentifiableObjectDescriptor | PrimitiveDescriptor
+  items: IdentifiableObjectDescriptor | PrimitiveDescriptor
 }
 
 type _WithObjectProps = {
-  props: {
+  properties: {
     [propName: string]: ValueDescriptor
   }
 }
@@ -50,7 +50,7 @@ export type ObjectDescriptor = _WithObjectProps & {
 
 export type IdentifiableObjectDescriptor = ObjectDescriptor & {
   idProp: {
-    name: string
+    path: string
   }
 }
 

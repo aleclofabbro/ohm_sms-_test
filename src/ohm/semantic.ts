@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import grammar from './grammar/grammar.ohm-bundle.js'
 // Puoi usare 'get' di radashi se preferisci semplificare, ma per validare 
-// l'albero dei tipi del descriptor (che ha 'props' ed 'elemDescriptor')
+// l'albero dei tipi del descriptor (che ha 'properties' ed 'items')
 // una funzione dedicata è più sicura.
 import type {
   ModelDescriptor,
@@ -44,20 +44,29 @@ export function compileQuery(
     for (let i = 1; i < parts.length; i++) {
       const prop = parts[i]
       
-      if (currentDesc.type === 'object' && currentDesc.props) {
-        currentDesc = currentDesc.props[prop]
-      } else if (currentDesc.type === 'array' && currentDesc.elemDescriptor) {
-        if (currentDesc.elemDescriptor.type === 'object') {
-          currentDesc = currentDesc.elemDescriptor.props[prop]
+      if (currentDesc.type === 'object' && currentDesc.properties) {
+        currentDesc = currentDesc.properties[prop]
+      } else if (currentDesc.type === 'array' && currentDesc.items) {
+        if (currentDesc.items.type === 'object') {
+          currentDesc = currentDesc.items.properties[prop]
         } else {
-          throw new Error(`Semantic Error: Impossibile navigare '${prop}', l'array '${parts[i-1]}' contiene primitive.`)
+          debug()
+          throw new Error(
+            `Semantic Error: Impossibile navigare '${prop}', l'array '${parts[i - 1]}' contiene primitive.`,
+          )
         }
       } else {
-        throw new Error(`Semantic Error: Impossibile navigare '${prop}' da '${parts[i-1]}'.`)
+        debug()
+        throw new Error(
+          `Semantic Error: Impossibile navigare '${prop}' da '${parts[i - 1]}'.`,
+        )
       }
       
       if (!currentDesc) {
         throw new Error(`Semantic Error: La proprietà '${prop}' nel path '${absolutePath}' non esiste nel descrittore.`)
+      }
+      function debug() {
+        console.log({ prop, currentDesc })
       }
     }
   }
@@ -76,7 +85,7 @@ export function compileQuery(
       const blocks = nodes
         .flat()
         .filter((node: _any) => node && node.select) as CompileQueryBlock[]
-      
+
       return { queries: blocks } satisfies CompileQueryResult
     },
 
@@ -88,21 +97,34 @@ export function compileQuery(
       return stmt.toAST()
     },
 
-    SelectBlock(_kwSelect, propPath, _lParen, idList, _rParen, _eol, stmtSeq, _kwDone, _eol2) {
+    SelectBlock(
+      _kwSelect,
+      propPath,
+      _lParen,
+      idList,
+      _rParen,
+      _eol,
+      stmtSeq,
+      _kwDone,
+      _eol2,
+    ) {
       const localTarget = propPath.sourceString
-      
+
       // Costruiamo il path assoluto guardando il padre nello stack
-      const parentPath = pathStack.length > 0 ? pathStack[pathStack.length - 1] : ''
-      const absoluteTarget = parentPath ? `${parentPath}.${localTarget}` : localTarget
+      const parentPath =
+        pathStack.length > 0 ? pathStack[pathStack.length - 1] : ''
+      const absoluteTarget = parentPath
+        ? `${parentPath}.${localTarget}`
+        : localTarget
 
       // Validazione contestuale (Aware)
       validateDescriptorPath(absoluteTarget)
 
       // "Push" del contesto corrente prima di valutare i figli
       pathStack.push(absoluteTarget)
-      
+
       const commands = stmtSeq.toAST().flat().filter(Boolean) as Command[]
-      
+
       // "Pop" in risalita
       pathStack.pop()
 
@@ -110,17 +132,17 @@ export function compileQuery(
         type: 'SELECT',
         target: absoluteTarget, // Es: diventerà "organizations.departments"
         targetIds: idList.toAST() as EntityIds,
-        sourceString: this.sourceString
+        sourceString: this.sourceString,
       }
 
-      // Ritorniamo il blocco. Se questo SELECT è annidato, finirà dentro 
+      // Ritorniamo il blocco. Se questo SELECT è annidato, finirà dentro
       // l'array `commands` del parent SelectBlock.
       return {
         type: 'CompileQueryBlock',
         query: this.sourceString,
         select,
         commands,
-      } satisfies CompileQueryBlock 
+      } satisfies CompileQueryBlock
     },
 
     // --- Istruzioni di Mutazione ---
@@ -130,7 +152,7 @@ export function compileQuery(
         type: 'SET',
         path: propPath.sourceString, // Il path per radashi resta relativo al target del blocco
         value: jsonVal.toAST(),
-        sourceString: this.sourceString
+        sourceString: this.sourceString,
       } satisfies ValueMutationCommand
     },
 
@@ -139,7 +161,7 @@ export function compileQuery(
         type: 'ADD',
         path: propPath.sourceString,
         value: jsonVal.toAST(),
-        sourceString: this.sourceString
+        sourceString: this.sourceString,
       } satisfies ValueMutationCommand
     },
 
@@ -148,7 +170,7 @@ export function compileQuery(
         type: 'UPSERT',
         path: propPath.sourceString,
         value: jsonVal.toAST(),
-        sourceString: this.sourceString
+        sourceString: this.sourceString,
       } satisfies ValueMutationCommand
     },
 
@@ -157,7 +179,7 @@ export function compileQuery(
         type: 'REMOVE',
         path: propPath.sourceString,
         targetIds: idList.toAST() as EntityIds,
-        sourceString: this.sourceString
+        sourceString: this.sourceString,
       } satisfies RemoveCommand
     },
 
@@ -175,22 +197,24 @@ export function compileQuery(
       return chars.sourceString
     },
 
-    IntId(_sign, digits) {
+    IntId(_sign, _digits) {
       return parseInt(this.sourceString, 10)
     },
 
-    jsonValue(chars) {
+    jsonValue(_chars) {
       const raw = this.sourceString.replace(/\/\/.*$/, '').trim()
       try {
         return JSON.parse(raw)
       } catch (error) {
-        throw new Error(`JSON Parse Error nella query:\n'${raw}'\nDettaglio: ${(error as Error).message}`)
+        throw new Error(
+          `JSON Parse Error nella query:\n'${raw}'\nDettaglio: ${(error as Error).message}`,
+        )
       }
     },
 
     nl(_cr, _lf) {
       return null
-    }
+    },
   })
 
   return semantics(matchResult).toAST() as CompileQueryResult

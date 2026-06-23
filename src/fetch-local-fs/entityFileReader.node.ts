@@ -23,7 +23,7 @@ export async function entityFileReader({ id, name, basePath }: arg) {
   // return ________________________REFACTOR_ARRAY_ITEMS(object)
   return object
 }
-
+/* 
 function ________________________REFACTOR_ARRAY_ITEMS(object: any) {
   function entryReducer(acc: [string, any][], [k, val]: [string, any]) {
     const entry: [string, any] = [
@@ -55,3 +55,4 @@ function ________________________REFACTOR_ARRAY_ITEMS(object: any) {
   const __ = Object.entries(object).reduce(entryReducer, [] as [string, any][])
   return Object.fromEntries(__)
 }
+ */

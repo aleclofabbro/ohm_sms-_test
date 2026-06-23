@@ -2,54 +2,54 @@ import type { ModelDescriptor, EntityDescriptor } from './ohm/types'
 
 export const channelDescriptor: EntityDescriptor = {
   type: 'object',
-  idProp: { name: 'id.id' }, // Utilizziamo xmlId come identificatore primitivo primario
-  props: {
+  idProp: { path: 'id.id' }, // Utilizziamo xmlId come identificatore primitivo primario
+  properties: {
     versionableUuid: { type: 'string' },
     versionableVersion: { type: 'string' },
     versionableType: { type: 'string' },
     id: {
       type: 'object',
-      props: { id: { type: 'string' } },
+      properties: { id: { type: 'string' } },
     },
     xmlId: { type: 'string' },
     name: { type: 'string' },
     qualifiedName: {
       type: 'array',
-      elemDescriptor: { type: 'string' },
+      items: { type: 'string' },
     },
     parentId: {
       type: 'object',
-      props: { id: { type: 'string' } },
+      properties: { id: { type: 'string' } },
     },
     subchannelIds: {
       type: 'array',
-      elemDescriptor: {
+      items: {
         type: 'object',
-        idProp: { name: 'id' },
-        props: { id: { type: 'string' } },
+        idProp: { path: 'id' },
+        properties: { id: { type: 'string' } },
       },
     },
 
     // NOTA SUI RIFERIMENTI CICLICI: parent, parentRef, subchannels, subchannelRefs
     // Se il tuo motore supporta i riferimenti (es. type: 'reference'), puoi usarli.
     // Altrimenti vengono mappati come oggetti base senza espansione infinita.
-    parentRef: { type: 'object', props: { id: { type: 'string' } } },
-    parent: { type: 'object', props: { id: { type: 'string' } } },
+    parentRef: { type: 'object', properties: { id: { type: 'string' } } },
+    parent: { type: 'object', properties: { id: { type: 'string' } } },
 
     subchannelRefs: {
       type: 'array',
-      elemDescriptor: {
+      items: {
         type: 'object',
-        idProp: { name: 'id' },
-        props: { id: { type: 'string' } },
+        idProp: { path: 'id' },
+        properties: { id: { type: 'string' } },
       },
     },
     subchannels: {
       type: 'array',
-      elemDescriptor: {
+      items: {
         type: 'object',
-        idProp: { name: 'id' },
-        props: { id: { type: 'string' } },
+        idProp: { path: 'id' },
+        properties: { id: { type: 'string' } },
       },
     },
 
@@ -58,7 +58,7 @@ export const channelDescriptor: EntityDescriptor = {
     travelSolutionProfile: {
       type: 'object',
       // idProp: { name: 'id' },
-      props: {
+      properties: {
         versionableUuid: { type: 'string' },
         versionableVersion: { type: 'string' },
         versionableType: { type: 'string' },
@@ -71,27 +71,27 @@ export const channelDescriptor: EntityDescriptor = {
 
     navigationProfile: {
       type: 'object',
-      props: { id: { type: 'string' } },
+      properties: { id: { type: 'string' } },
     },
     direction: { type: 'string' },
 
     tags: {
       type: 'array',
-      elemDescriptor: { type: 'number' },
+      items: { type: 'number' },
     },
     tagValues: {
       type: 'array',
-      elemDescriptor: { type: 'string' },
+      items: { type: 'string' },
     },
 
     locationId: {
       type: 'object',
-      props: { id: { type: 'string' } },
+      properties: { id: { type: 'string' } },
     },
 
     accountingOfficeId: {
       type: 'object',
-      props: {
+      properties: {
         at_type: { type: 'string' },
         accountingOfficeId: { type: 'number' },
         ticketCounterId: { type: 'number' },
@@ -100,10 +100,10 @@ export const channelDescriptor: EntityDescriptor = {
 
     paymentConfigurations: {
       type: 'array',
-      elemDescriptor: {
+      items: {
         type: 'object',
-        idProp: { name: 'paymentId' },
-        props: {
+        idProp: { path: 'paymentId' },
+        properties: {
           enabled: { type: 'boolean' },
           paymentId: { type: 'string' },
         },
@@ -112,10 +112,10 @@ export const channelDescriptor: EntityDescriptor = {
 
     ticketConfigurations: {
       type: 'array',
-      elemDescriptor: {
+      items: {
         type: 'object',
-        idProp: { name: 'ticketDocumentType' },
-        props: {
+        idProp: { path: 'ticketDocumentType' },
+        properties: {
           ticketDocumentType: { type: 'string' },
           enabled: { type: 'boolean' },
         },
@@ -128,7 +128,7 @@ export const channelDescriptor: EntityDescriptor = {
 
     environments: {
       type: 'array',
-      elemDescriptor: { type: 'number' },
+      items: { type: 'number' },
     },
 
     creationTimestamp: { type: 'string' },
@@ -138,8 +138,8 @@ export const channelDescriptor: EntityDescriptor = {
 
 const serviceParameterTypeDescriptor: EntityDescriptor = {
   type: 'object',
-  idProp:{name:'id'},
-  props: {
+  idProp: { path: 'id' },
+  properties: {
     id: { type: 'number' },
     at_type: { type: 'string' },
     versionableUuid: { type: 'string' },
@@ -151,10 +151,10 @@ const serviceParameterTypeDescriptor: EntityDescriptor = {
     validation: { type: 'boolean' },
     typeDefinition: {
       type: 'object',
-      props: {
+      properties: {
         enumeration: {
           type: 'array',
-          elemDescriptor: { type: 'string' },
+          items: { type: 'string' },
         },
         validationPattern: { type: 'string' },
         inputPattern: { type: 'string' },

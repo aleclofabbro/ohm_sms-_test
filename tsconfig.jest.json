@@ -6,12 +6,8 @@
     "esModuleInterop": true,
     "allowJs": true,
     "checkJs": false,
-    "moduleResolution": "nodenext",
-    "module": "nodenext"
+    "moduleResolution": "bundler",
+    "module": "esnext"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.node.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

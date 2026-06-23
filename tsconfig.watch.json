@@ -1,12 +1,11 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "es2023",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"],
     "module": "esnext",
-    "types": ["node"],
+    "types": ["vite/client"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -14,14 +13,15 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    // "noEmit": true, //https://stackoverflow.com/questions/71704754/typescript-yarn-workspaces-referenced-project-may-not-disable-emit
+    "jsx": "react-jsx",
+    "noEmit": true, //https://stackoverflow.com/questions/71704754/typescript-yarn-workspaces-referenced-project-may-not-disable-emit
     "emitDeclarationOnly": true,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "src/**/*.node.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

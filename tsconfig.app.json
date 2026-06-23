@@ -24,8 +24,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "exclude": [
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx"
-  ]
+  "exclude": ["src/**/*.node.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

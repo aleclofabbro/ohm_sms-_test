@@ -1,4 +1,4 @@
-import { entityFileReader } from './entityFileReader._.test'
+import { entityFileReader } from './entityFileReader.node'
 
 test('autotest', async () => {
   const channel = await entityFileReader({

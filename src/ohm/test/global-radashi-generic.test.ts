@@ -1,5 +1,5 @@
-import { inspect } from 'util'
-import { execQueryRadashi } from '../radashi-engine'
+import { executeQuery } from '../exec-query'
+import { radashiCommandEngine } from '../radashi-engine'
 import { ModelDescriptor } from '../types'
 
 // ==========================================
@@ -62,14 +62,14 @@ export type MockModel = {
 const modelDescriptor: ModelDescriptor = {
   users: {
     type: 'object',
-    idProp: { name: 'userId' },
-    props: {
+    idProp: { path: 'userId' },
+    properties: {
       userId: { type: 'string' },
       status: { type: 'string' },
       priority: { type: 'number' },
       metadata: {
         type: 'object',
-        props: {
+        properties: {
           source: { type: 'string' },
           verified: { type: 'boolean' },
         },
@@ -78,12 +78,12 @@ const modelDescriptor: ModelDescriptor = {
   },
   systems: {
     type: 'object',
-    idProp: { name: 'sysId' },
-    props: {
+    idProp: { path: 'sysId' },
+    properties: {
       sysId: { type: 'number' },
       config: {
         type: 'object',
-        props: {
+        properties: {
           timeout: { type: 'number' },
         },
       },
@@ -92,25 +92,25 @@ const modelDescriptor: ModelDescriptor = {
   },
   organizations: {
     type: 'object',
-    idProp: { name: 'orgId' },
-    props: {
+    idProp: { path: 'orgId' },
+    properties: {
       orgId: { type: 'string' },
       departments: {
         type: 'array',
-        elemDescriptor: {
+        items: {
           type: 'object',
-          idProp: { name: 'depId' },
-          props: {
+          idProp: { path: 'depId' },
+          properties: {
             depId: { type: 'number' },
             name: { type: 'string' },
             budget: { type: 'number' },
             active: { type: 'boolean' },
             employees: {
               type: 'array',
-              elemDescriptor: {
+              items: {
                 type: 'object',
-                idProp: { name: 'empId' },
-                props: {
+                idProp: { path: 'empId' },
+                properties: {
                   empId: { type: 'string' },
                   role: { type: 'string' },
                 },
@@ -121,19 +121,19 @@ const modelDescriptor: ModelDescriptor = {
       },
       tags: {
         type: 'array',
-        elemDescriptor: { type: 'string' },
+        items: { type: 'string' },
       },
     },
   },
   weirdFormats: {
     type: 'object',
-    idProp: { name: 'wfId' },
-    props: {
+    idProp: { path: 'wfId' },
+    properties: {
       wfId: { type: 'string' },
       spacedProp: { type: 'string' },
       data: {
         type: 'array',
-        elemDescriptor: { type: 'number' },
+        items: { type: 'number' },
       },
     },
   },
@@ -183,7 +183,7 @@ donE
 // TEST RUNNER
 // ==========================================
 test('global test', async () => {
-  const execQueryRadashiResult = await execQueryRadashi({
+  const execQueryRadashiResult = await executeQuery({
     io: {
       async requireModel(/* { ids } */) {
         return {
@@ -193,9 +193,10 @@ test('global test', async () => {
     },
     modelDescriptor,
     query,
+    engine: radashiCommandEngine,
   })
-console.log(inspect(execQueryRadashiResult, { depth: 10, colors: true }))
-expect(execQueryRadashiResult.model.after).toEqual(expectedModel)
+  // console.log(inspect(execQueryRadashiResult, { depth: 10, colors: true }))
+  expect(execQueryRadashiResult.model.after).toEqual(expectedModel)
 })
 
 // ==========================================
