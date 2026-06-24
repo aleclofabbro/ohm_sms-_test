@@ -67,7 +67,7 @@ export const ResultViewer: React.FC = () => {
                   <DiffEditor
                     height="100%"
                     language="json"
-                    theme="vs-dark"
+                    // theme="vs-dark"
                     original={JSON.stringify(queryResult.before, null, 2)}
                     modified={JSON.stringify(queryResult.after, null, 2)}
                     options={{
