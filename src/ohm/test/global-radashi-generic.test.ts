@@ -1,6 +1,6 @@
 import { executeQuery } from '../exec-query'
 import { radashiCommandEngine } from '../radashi-engine'
-import { ModelDescriptor } from '../types'
+import type { ModelDescriptor } from '../types'
 
 // ==========================================
 // TIPI BASE (Strict, no optional, max 2 livelli)

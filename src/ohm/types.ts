@@ -1,6 +1,4 @@
-// ==========================================
-// 1. Model, Entities, Collections
-// ==========================================
+// Model, Entities, Collections
 
 import { get } from 'radashi'
 
@@ -32,10 +30,7 @@ export type SomeDescriptor =
   | ModelDescriptor
   | EntityCollectionDescriptor
 
-
-// ==========================================
-// 2. Value Descriptors
-// ==========================================
+// Value Descriptors
 export const isPrimitiveDescriptor = (
   desc: SomeDescriptor,
 ): desc is PrimitiveDescriptor =>
@@ -72,7 +67,8 @@ export type IdProp = {
 }
 
 export const idExtractor =
-  (command: Command | SelectCommand) => (item: _any) => {
+  (command: Pick<Command | SelectCommand, 'type' | 'isList' | 'idProp'>) =>
+  (item: _any) => {
     const idProp =
       command.type === 'SELECT'
         ? command.idProp
@@ -83,10 +79,9 @@ export const idExtractor =
     return !idProp ? item : get<unknown>(item, idProp.path)
   }
 
-export type IdentifiableObjectDescriptor /* <entity extends boolean = false> */ =
-  ObjectDescriptor & {
-    idProp: IdProp
-  }
+export type IdentifiableObjectDescriptor = ObjectDescriptor & {
+  idProp: IdProp
+}
 
 export type RequireModelIO = {
   requiredModel: RequiredModel
@@ -108,9 +103,7 @@ export type RequireModelResult = {
   // }[]
 }
 
-// ==========================================
-// 4. AST (Abstract Syntax Tree) - OHM Output
-// ==========================================
+// OHM - AST Output
 
 type _base_command_<list extends 'no' | 'simple' | 'targetIds' = 'no'> = {
   sourceString: string
@@ -142,7 +135,7 @@ export type AddCommand = _base_command_<'simple'> & {
 export type RemoveCommand = _base_command_<'targetIds'> & {
   type: 'REMOVE'
 }
-export type UpsertCommand = _base_command_<'simple'> & {
+export type UpsertCommand = _base_command_<'targetIds'> & {
   type: 'UPSERT'
   value: _any[]
 }
@@ -163,14 +156,4 @@ export type SelectBlock = {
 
 export type CompileQueryResult = {
   selectBlocks: SelectBlock[]
-}
-
-// ==========================================
-// 5. Execution Pipeline - Radashi Engine
-// ==========================================
-
-export type OperationThunk = () => Promise<unknown> | unknown
-
-export type CommandThunk = Command & {
-  execute: OperationThunk
 }

@@ -2,9 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { last, sift } from 'radashi'
 import grammar from './grammar/grammar.ohm-bundle.js'
-// Puoi usare 'get' di radashi se preferisci semplificare, ma per validare 
-// l'albero dei tipi del descriptor (che ha 'properties' ed 'items')
-// una funzione dedicata è più sicura.
 import {
   isPrimitiveDescriptor,
   type _any,
@@ -22,7 +19,9 @@ import {
   type UpsertCommand,
   type AddCommand,
   type IdProp,
+  idExtractor,
 } from './types'
+import { inspect } from 'util'
 type RootStackItem = {
   descriptor: ModelDescriptor
 }
@@ -39,7 +38,7 @@ type ArrayStackItem = {
 type StackItemDescriptor = StackItem['descriptor']
 type Stack = [RootStackItem, EntityStackItem?, ...ArrayStackItem[]]
 type StackItem = RootStackItem | EntityStackItem | ArrayStackItem
-  
+
 export function compileQuery(
   query: string,
   modelDescriptor: ModelDescriptor,
@@ -48,55 +47,6 @@ export function compileQuery(
   if (matchResult.failed()) {
     throw new Error(`Syntax Error:\n${matchResult.message}`)
   }
-
-  // // =========================================================
-  // // HELPER: Validazione profonda sul ModelDescriptor
-  // // =========================================================
-  // function validateDescriptorPath(absolutePath: string) {
-  //   const parts = absolutePath.split('.')
-  //   const root = parts[0]
-
-  //   if (!modelDescriptor[root]) {
-  //     throw new Error(
-  //       `Semantic Error: L'entità root '${root}' non esiste nel ModelDescriptor.`,
-  //     )
-  //   }
-
-  //   // Navighiamo il descriptor per validare la dot-notation e i nested array
-  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //   let currentDesc: any = modelDescriptor[root]
-
-  //   for (let i = 1; i < parts.length; i++) {
-  //     const prop = parts[i]
-
-  //     if (currentDesc.type === 'object' && currentDesc.properties) {
-  //       currentDesc = currentDesc.properties[prop]
-  //     } else if (currentDesc.type === 'array' && currentDesc.items) {
-  //       if (currentDesc.items.type === 'object') {
-  //         currentDesc = currentDesc.items.properties[prop]
-  //       } else {
-  //         debug()
-  //         throw new Error(
-  //           `Semantic Error: Impossibile navigare '${prop}', l'array '${parts[i - 1]}' contiene primitive.`,
-  //         )
-  //       }
-  //     } else {
-  //       debug()
-  //       throw new Error(
-  //         `Semantic Error: Impossibile navigare '${prop}' da '${parts[i - 1]}'.`,
-  //       )
-  //     }
-
-  //     if (!currentDesc) {
-  //       throw new Error(
-  //         `Semantic Error: La proprietà '${prop}' nel path '${absolutePath}' non esiste nel descrittore.`,
-  //       )
-  //     }
-  //     function debug() {
-  //       console.log({ prop, currentDesc })
-  //     }
-  //   }
-  // }
 
   const semantics = grammar.createSemantics()
 
@@ -130,10 +80,9 @@ export function compileQuery(
       _eol2,
     ) {
       const localTarget = propPath.sourceString
-console.log(stack)
-pushStack(localTarget)
-console.log(stack)
-const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
+      // console.log(inspect([...stack], { colors: true, depth: 5 }))
+      pushStack(localTarget)
+      const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
 
       const select: SelectCommand = {
         type: 'SELECT',
@@ -155,12 +104,11 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
       } satisfies SelectBlock
     },
 
-
     SetStmt(_kw, propPath, _eq, jsonVal) {
       const localTarget = propPath.sourceString
       return {
         type: 'SET',
-        path: localTarget, // Il path per radashi resta relativo al target del blocco
+        path: localTarget,
         value: jsonVal.toAST(),
         sourceString: this.sourceString,
         isList: false,
@@ -180,13 +128,24 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
     },
 
     UpsertStmt(_kw, propPath, _eq, jsonVal) {
+      const upsertIdProp = idProp(propPath.sourceString)
+      const extractId = idExtractor({
+        type: 'UPSERT',
+        isList: true,
+        idProp: upsertIdProp,
+      })
+      const value = jsonVal.toAST()
+      const targetIds = value.map(extractId)
+      // console.log({ value, targetIds })
       return {
         type: 'UPSERT',
         path: propPath.sourceString,
-        value: jsonVal.toAST(),
+        value,
         sourceString: this.sourceString,
         isList: true,
-        isTargetedList: false,
+        isTargetedList: true,
+        idProp: upsertIdProp,
+        targetIds,
       } satisfies UpsertCommand
     },
 
@@ -197,12 +156,10 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
         sourceString: this.sourceString,
         isList: true,
         targetIds: idList.toAST() as Ids,
-        idProp: idProp(),
+        idProp: idProp(propPath.sourceString),
         isTargetedList: true,
       } satisfies RemoveCommand
     },
-
-    // --- Regole Lessicali ---
 
     IdList(ids) {
       return ids.asIteration().children.map((c) => c.toAST())
@@ -238,11 +195,15 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
 
   return semantics(matchResult).toAST() as CompileQueryResult
 
-  function idProp(): IdProp | undefined {
+  function idProp(dotPath = ''): IdProp | undefined {
     const currentStack = stack_current()
-    return currentStack.descriptor.type === 'array'
-      ? currentStack.descriptor.items.type === 'object'
-        ? currentStack.descriptor.items.idProp
+    const targetDescriptor = getTargetDescriptor(
+      currentStack.descriptor,
+      dotPath,
+    )
+    return targetDescriptor.type === 'array'
+      ? targetDescriptor.items.type === 'object'
+        ? targetDescriptor.items.idProp
         : undefined
       : undefined
   }
@@ -258,7 +219,8 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
     if (!prop) {
       return descriptor
     }
-    if (prop && isPrimitiveDescriptor(descriptor)) {
+    if (isPrimitiveDescriptor(descriptor)) {
+      // console.log(inspect({ dotPath, descriptor }, { colors: true, depth: 10 }))
       throw new Error(`cannot getDescriptor ${dotPath} in ${descriptor.type}`, {
         cause: { current: descriptor, dotPath },
       })
@@ -266,12 +228,13 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
 
     const restDotPath = restPath.join('.')
     const nextDesc = isPrimitiveDescriptor(descriptor)
-      ? descriptor
+      ? getTargetDescriptor(descriptor, restDotPath)
       : descriptor.type === 'object' || descriptor.type === 'model'
         ? getTargetDescriptor(descriptor.properties[prop], restDotPath)
         : descriptor.type === 'array'
-          ? getTargetDescriptor(descriptor.items, restDotPath)
-          : (null as never)
+          ? getTargetDescriptor(descriptor.items, prop)
+          : //restDotPath dotPath  prop
+            (null as never)
     return nextDesc
   }
   function pushStack(dotPath: string) {
@@ -298,12 +261,23 @@ const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
     dotPath: string,
   ): EntityCollectionDescriptor | ArrayDescriptor {
     const targetDescriptor = getTargetDescriptor(inDescriptor, dotPath)
-    console.log({ inDescriptor, dotPath, targetDescriptor })
+    // console.log(
+    //   inspect(
+    //     { inDescriptor, dotPath, targetDescriptor },
+    //     { colors: true, depth: 5 },
+    //   ),
+    // )
     if (targetDescriptor.type !== 'array') {
+      console.log(
+        inspect(
+          { inDescriptor, dotPath, targetDescriptor },
+          { colors: true, depth: 10 },
+        ),
+      )
       throw new Error(
         `cannot selectionStack ${dotPath} in ${inDescriptor.type}: found ${targetDescriptor.type}`,
         {
-          cause: { descriptor: inDescriptor, dotPath, targetDescriptor },
+          cause: { inDescriptor, dotPath, targetDescriptor },
         },
       )
     }

@@ -1,4 +1,4 @@
-/* eslint-disable preserve-caught-error */
+// /* --eslint-disable preserve-caught-error */
 import { cloneDeep, get, set, unique } from 'radashi'
 import { compileQuery } from './semantic'
 import {
@@ -77,23 +77,15 @@ export async function executeQuery({
     cloneDeep(fetchResult.model),
   )
 
-  //   thunkPipeline.forEach((thunk) => {
-  //     try {
-  //       return thunk.execute()
-  //     } catch (error) {
-  //       console.error(error)
-  //       throw new Error(
-  //         `
-  // DEBUG:
-  // Errore durante l'esecuzione del comando: ${thunk.type} at path '${thunk.path}'
-  // Sorgente: ${thunk.sourceString}
-  // Dettaglio: ${(error as Error).message}
-  // `.trimEnd(),
-  //         // { cause: error },
-  //       )
-  //     }
-  //   })
-
+  // console.log(
+  //   inspect(
+  //     {
+  //       after,
+  //       before,
+  //     },
+  //     { colors: true, depth: 7 },
+  //   ),
+  // )
   return {
     compile: {
       result: compileQueryResult,
@@ -119,17 +111,20 @@ function processSelectBlock({
     throw new Error(
       `
 DEBUG:
-Non posso processSelectBlock: at path '${selectBlock.select.path} trovato ${typeof overArray}'
+Non posso processSelectBlock: at path '${selectBlock.select.path}' trovato '${typeof overArray}'
 `.trimEnd(),
-      // { cause: error },
+      { cause: { selectBlock, engine, overObj } },
     )
   }
-  const modArray = overArray.map((currentOverObj) =>
-    selectBlock.commands.reduce((overObj, command) => {
+
+  const modArray = overArray.map((currentOverObj) => {
+    // console.log(inspect({ currentOverObj }, { colors: true, depth: 5 }))
+    return selectBlock.commands.reduce((overObj, command) => {
+      // console.log(inspect({ overObj, command }, { colors: true, depth: 5 }))
       if (command.type === 'SelectBlock') {
         return processSelectBlock({
           selectBlock: command,
-          overObj: get<Obj[]>(overObj, command.select.path),
+          overObj, //: get<Obj[]>(overObj, command.select.path),
           engine,
         })
       }
@@ -142,8 +137,13 @@ Non posso processSelectBlock: at path '${selectBlock.select.path} trovato ${type
         command,
         overObj,
       })
-    }, currentOverObj),
-  )
-  console.log(JSON.stringify({ overArray, modArray }, null, 2))
+    }, currentOverObj)
+  })
+  // console.log(
+  //   inspect(
+  //     { overArray, modArray, overObj, selectBlock },
+  //     { colors: true, depth: 5 },
+  //   ),
+  // )
   return set(overObj, selectBlock.select.path, modArray)
 }

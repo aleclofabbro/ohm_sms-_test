@@ -1,4 +1,4 @@
-import { get, group, replace, set, unique } from 'radashi'
+import { get, replaceOrAppend, set, unique } from 'radashi'
 import { type CommandEngine } from './exec-query'
 import { idExtractor, type Command, type Obj } from './types'
 
@@ -27,38 +27,53 @@ function applyMutation({
             ? command.value
             : [command.value]
 
-          return set(
-            overObj,
-            command.path,
-            unique(
-              [...itemsToAdd, ...get(overObj, command.path, [])],
-              extractId,
-            ),
+          return unique(
+            [...get(overObj, command.path, []), ...itemsToAdd],
+            extractId,
           )
         }
 
         case 'UPSERT': {
-          const itemsToUpsert = Array.isArray(command.value)
-            ? command.value
-            : [command.value]
+          const itemsToUpsert = [command.value].flat()
+          const targetArray = get(overObj, command.path, [])
+          const upsertedArray = itemsToUpsert.reduce((upsertArray, item) => {
+            const partialUpsertedArray = replaceOrAppend(
+              upsertArray,
+              item,
+              (_it) => {
+                const extractId__it = extractId(_it)
+                const extractId_item = extractId(item)
+                // console.log({
+                //   upsertArray,
+                //   item,
+                //   extractId__it,
+                //   extractId_item,
+                // })
+                return extractId__it === extractId_item
+              },
+            )
+            return partialUpsertedArray
+          }, targetArray)
 
-          const { toAdd = [], toReplace = [] } = group(itemsToUpsert, (item) =>
-            get(overObj, command.path, [])
-              .map(extractId)
-              .includes(extractId(item))
-              ? 'toReplace'
-              : 'toAdd',
-          )
-          const replaced = toReplace.reduce((acc, withItem) => {
-            return replace(acc, withItem, (item) => extractId(item))
-          }, [])
-          return [...replaced, ...toAdd]
+          return upsertedArray
         }
 
         case 'REMOVE': {
-          const filteredArr = get(overObj, command.path, []).filter(
-            (item) => !command.targetIds.includes(extractId(item)),
-          )
+          const targetArray = get(overObj, command.path, [])
+          const filteredArr = targetArray.filter((item) => {
+            const itemId = extractId(item)
+            // console.log({
+            //   itemId,
+            //   item,
+            //   commandTargetIds: command.targetIds,
+            // })
+            return !command.targetIds.includes(itemId)
+          })
+          // console.log({
+          //   targetArray,
+          //   filteredArr,
+          //   commandTargetIds: command.targetIds,
+          // })
           return filteredArr
         }
 
