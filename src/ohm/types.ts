@@ -2,40 +2,59 @@
 // 1. Model, Entities, Collections
 // ==========================================
 
+import { get } from 'radashi'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type _any = any
-export type Entity = Record<string, _any>
+export type Obj = Record<string, _any>
+export type Entity = Obj
 
 export type EntityCollection = Entity[]
-export type EntityId = string | number
-export type EntityIds = EntityId[]
+export type Id = string | number
+export type Ids = Id[]
 
 export type ModelDescriptor = {
-  [entityName: string]: EntityDescriptor
+  type: 'model'
+  properties: {
+    [entityName: string]: EntityCollectionDescriptor
+  }
 }
 
 export type Model = {
   [entityName: string]: EntityCollection
 }
 
-export type EntityDescriptor = IdentifiableObjectDescriptor
+export type EntityCollectionDescriptor =
+  ArrayDescriptor<IdentifiableObjectDescriptor>
+
+export type SomeDescriptor =
+  | ValueDescriptor
+  | ModelDescriptor
+  | EntityCollectionDescriptor
+
 
 // ==========================================
 // 2. Value Descriptors
 // ==========================================
-
+export const isPrimitiveDescriptor = (
+  desc: SomeDescriptor,
+): desc is PrimitiveDescriptor =>
+  !(desc.type === 'array' || desc.type === 'model' || desc.type === 'object')
 export type ValueDescriptor =
   | PrimitiveDescriptor
   | ObjectDescriptor
   | ArrayDescriptor
+  | IdentifiableObjectDescriptor
 
 export type PrimitiveDescriptor = {
   type: 'number' | 'string' | 'boolean'
 }
 
-export type ArrayDescriptor = {
+type ArrayItem = IdentifiableObjectDescriptor | PrimitiveDescriptor
+
+export type ArrayDescriptor<items extends ArrayItem = ArrayItem> = {
   type: 'array'
-  items: IdentifiableObjectDescriptor | PrimitiveDescriptor
+  items: items
 }
 
 type _WithObjectProps = {
@@ -48,21 +67,32 @@ export type ObjectDescriptor = _WithObjectProps & {
   type: 'object'
 }
 
-export type IdentifiableObjectDescriptor = ObjectDescriptor & {
-  idProp: {
-    path: string
-  }
+export type IdProp = {
+  path: string
 }
 
-// ==========================================
-// 3. IO & Fetching
-// ==========================================
+export const idExtractor =
+  (command: Command | SelectCommand) => (item: _any) => {
+    const idProp =
+      command.type === 'SELECT'
+        ? command.idProp
+        : !command.isList
+          ? undefined
+          : command.idProp
+
+    return !idProp ? item : get<unknown>(item, idProp.path)
+  }
+
+export type IdentifiableObjectDescriptor /* <entity extends boolean = false> */ =
+  ObjectDescriptor & {
+    idProp: IdProp
+  }
 
 export type RequireModelIO = {
   requiredModel: RequiredModel
 }
 export type RequiredModel = {
-  [entityName: string]: EntityId[]
+  [entityName: string]: Id[]
 }
 
 export type IO = {
@@ -82,39 +112,57 @@ export type RequireModelResult = {
 // 4. AST (Abstract Syntax Tree) - OHM Output
 // ==========================================
 
-export type BaseCommand = {
+type _base_command_<list extends 'no' | 'simple' | 'targetIds' = 'no'> = {
   sourceString: string
-}
-
-export type SelectCommand = BaseCommand & {
-  type: 'SELECT'
-  target: string
-  targetIds: EntityIds
-}
-
-export type ValueMutationCommand = BaseCommand & {
-  type: 'SET' | 'ADD' | 'UPSERT'
   path: string
+  isList: list extends 'no' ? false : true
+  isTargetedList: list extends 'targetIds' ? true : false
+} & (list extends 'targetIds'
+  ? {
+      targetIds: Ids
+      idProp: IdProp | undefined
+    }
+  : {
+      targetIds?: undefined
+      idProp?: undefined
+    })
+
+export type SetCommand = _base_command_ & {
+  type: 'SET'
   value: _any
 }
-
-export type RemoveCommand = BaseCommand & {
-  type: 'REMOVE'
-  path: string
-  targetIds: EntityIds
+export type SelectCommand = _base_command_<'targetIds'> & {
+  type: 'SELECT'
+}
+export type AddCommand = _base_command_<'simple'> & {
+  type: 'ADD'
+  value: _any[]
 }
 
-export type Command = ValueMutationCommand | RemoveCommand
+export type RemoveCommand = _base_command_<'targetIds'> & {
+  type: 'REMOVE'
+}
+export type UpsertCommand = _base_command_<'simple'> & {
+  type: 'UPSERT'
+  value: _any[]
+}
 
-export type CompileQueryBlock = {
-  type: 'CompileQueryBlock'
+export type Command =
+  | SetCommand
+  | RemoveCommand
+  | UpsertCommand
+  | AddCommand
+  | SetCommand
+
+export type SelectBlock = {
+  type: 'SelectBlock'
   query: string
   select: SelectCommand
-  commands: (Command | CompileQueryBlock)[]
+  commands: (Command | SelectBlock)[]
 }
 
 export type CompileQueryResult = {
-  queries: CompileQueryBlock[]
+  selectBlocks: SelectBlock[]
 }
 
 // ==========================================

@@ -16,7 +16,7 @@ export const MonacoSandbox: React.FC = () => {
     // or make sure that it exists by other ways
     if (monaco) {
       //  monaco.editor
-      console.log('here is the monaco instance:', monaco)
+      console.log('monaco instance:', monaco)
     }
   }, [monaco])
   return (

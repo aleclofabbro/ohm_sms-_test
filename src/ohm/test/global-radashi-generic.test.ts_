@@ -60,80 +60,95 @@ export type MockModel = {
 // MODEL DESCRIPTOR
 // ==========================================
 const modelDescriptor: ModelDescriptor = {
-  users: {
-    type: 'object',
-    idProp: { path: 'userId' },
-    properties: {
-      userId: { type: 'string' },
-      status: { type: 'string' },
-      priority: { type: 'number' },
-      metadata: {
+  type: 'model',
+  properties: {
+    users: {
+      type: 'array',
+      items: {
         type: 'object',
+        idProp: { path: 'userId' },
         properties: {
-          source: { type: 'string' },
-          verified: { type: 'boolean' },
-        },
-      },
-    },
-  },
-  systems: {
-    type: 'object',
-    idProp: { path: 'sysId' },
-    properties: {
-      sysId: { type: 'number' },
-      config: {
-        type: 'object',
-        properties: {
-          timeout: { type: 'number' },
-        },
-      },
-      setup_mode: { type: 'boolean' },
-    },
-  },
-  organizations: {
-    type: 'object',
-    idProp: { path: 'orgId' },
-    properties: {
-      orgId: { type: 'string' },
-      departments: {
-        type: 'array',
-        items: {
-          type: 'object',
-          idProp: { path: 'depId' },
-          properties: {
-            depId: { type: 'number' },
-            name: { type: 'string' },
-            budget: { type: 'number' },
-            active: { type: 'boolean' },
-            employees: {
-              type: 'array',
-              items: {
-                type: 'object',
-                idProp: { path: 'empId' },
-                properties: {
-                  empId: { type: 'string' },
-                  role: { type: 'string' },
-                },
-              },
+          userId: { type: 'string' },
+          status: { type: 'string' },
+          priority: { type: 'number' },
+          metadata: {
+            type: 'object',
+            properties: {
+              source: { type: 'string' },
+              verified: { type: 'boolean' },
             },
           },
         },
       },
-      tags: {
-        type: 'array',
-        items: { type: 'string' },
+    },
+    systems: {
+      type: 'array',
+      items: {
+        type: 'object',
+        idProp: { path: 'sysId' },
+        properties: {
+          sysId: { type: 'number' },
+          config: {
+            type: 'object',
+            properties: {
+              timeout: { type: 'number' },
+            },
+          },
+          setup_mode: { type: 'boolean' },
+        },
       },
     },
-  },
-  weirdFormats: {
-    type: 'object',
-    idProp: { path: 'wfId' },
-    properties: {
-      wfId: { type: 'string' },
-      spacedProp: { type: 'string' },
-      data: {
-        type: 'array',
-        items: { type: 'number' },
+    organizations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        idProp: { path: 'orgId' },
+        properties: {
+          orgId: { type: 'string' },
+          departments: {
+            type: 'array',
+            items: {
+              type: 'object',
+              idProp: { path: 'depId' },
+              properties: {
+                depId: { type: 'number' },
+                name: { type: 'string' },
+                budget: { type: 'number' },
+                active: { type: 'boolean' },
+                employees: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    idProp: { path: 'empId' },
+                    properties: {
+                      empId: { type: 'string' },
+                      role: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          tags: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+      },
+    },
+    weirdFormats: {
+      type: 'array',
+      items: {
+        type: 'object',
+        idProp: { path: 'wfId' },
+        properties: {
+          wfId: { type: 'string' },
+          spacedProp: { type: 'string' },
+          data: {
+            type: 'array',
+            items: { type: 'number' },
+          },
+        },
       },
     },
   },
@@ -195,7 +210,6 @@ test('global test', async () => {
     query,
     engine: radashiCommandEngine,
   })
-  // console.log(inspect(execQueryRadashiResult, { depth: 10, colors: true }))
   expect(execQueryRadashiResult.model.after).toEqual(expectedModel)
 })
 

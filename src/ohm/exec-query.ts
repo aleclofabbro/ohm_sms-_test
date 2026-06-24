@@ -1,31 +1,32 @@
 /* eslint-disable preserve-caught-error */
-import { cloneDeep } from 'radashi'
-import type {
-  Command,
-  CommandThunk,
-  CompileQueryBlock,
-  CompileQueryResult,
-  Entity,
-  IO,
-  Model,
-  ModelDescriptor,
-  RequiredModel,
-  SelectCommand,
-} from './types'
+import { cloneDeep, get, set, unique } from 'radashi'
 import { compileQuery } from './semantic'
+import {
+  idExtractor,
+  type _any,
+  type Command,
+  type CompileQueryResult,
+  type IO,
+  type Model,
+  type ModelDescriptor,
+  type Obj,
+  type RequiredModel,
+  type SelectBlock,
+} from './types'
 
-/**
- * Contratto che il modulo di esecuzione (es. radashi-engine) deve rispettare.
- * Il suo compito è puramente mappativo: riceve l'AST e i dati, e restituisce
- * le funzioni eseguibili (thunks).
- */
+// type CommandEngineCreatePipelineArg = {
+//   selectBlock: SelectBlock
+//   entities: Entity[]
+//   modelDescriptor: ModelDescriptor
+// }
+export type CommandEngineProcessCommandArg = {
+  command: Command
+  overObj: Obj
+}
+
 export interface CommandEngine {
-  createPipeline(
-    commands: (Command | CompileQueryBlock)[], // Supporta l'union type
-    entities: Entity[],
-    selectContext: SelectCommand,
-    modelDescriptor: ModelDescriptor,
-  ): CommandThunk[]
+  //createPipeline(_: CommandEngineCreatePipelineArg): CommandThunk[]
+  processCommand(_: CommandEngineProcessCommandArg): Obj
 }
 export type ExecResult = {
   model: {
@@ -53,13 +54,13 @@ export async function executeQuery({
   modelDescriptor,
 }: executeQueryArg): Promise<ExecResult> {
   const compileQueryResult = compileQuery(query, modelDescriptor)
-  const requiredModel = compileQueryResult.queries.reduce<RequiredModel>(
-    (acc, compileQueryBlock) => {
-      const requiredEntityName = compileQueryBlock.select.target
-      const requiredEntityIds = compileQueryBlock.select.targetIds
+  const requiredModel = compileQueryResult.selectBlocks.reduce<RequiredModel>(
+    (acc, selectBlock) => {
+      const requiredEntityName = selectBlock.select.path
+      const requiredEntityIds = selectBlock.select.targetIds
       const currentIds = (acc[requiredEntityName] =
         acc[requiredEntityName] ?? [])
-      const uniqueIds = [...new Set([...currentIds, ...requiredEntityIds])]
+      const uniqueIds = unique([...currentIds, ...requiredEntityIds])
       return {
         ...acc,
         [requiredEntityName]: uniqueIds,
@@ -69,34 +70,30 @@ export async function executeQuery({
   )
   const fetchResult = await io.requireModel({ requiredModel })
 
-  const before = cloneDeep(fetchResult.model)
-  const after = cloneDeep(fetchResult.model)
-  for (const block of compileQueryResult.queries) {
-    const { select, commands /* ,query */ } = block
-    const entityName = select.target
+  const before = fetchResult.model
+  const after = compileQueryResult.selectBlocks.reduce(
+    (overObj, selectBlock) =>
+      processSelectBlock({ selectBlock, engine, overObj }),
+    cloneDeep(fetchResult.model),
+  )
 
-    const pipeline = engine.createPipeline(
-      commands,
-      after[entityName] ?? [],
-      select,
-      modelDescriptor,
-    )
+  //   thunkPipeline.forEach((thunk) => {
+  //     try {
+  //       return thunk.execute()
+  //     } catch (error) {
+  //       console.error(error)
+  //       throw new Error(
+  //         `
+  // DEBUG:
+  // Errore durante l'esecuzione del comando: ${thunk.type} at path '${thunk.path}'
+  // Sorgente: ${thunk.sourceString}
+  // Dettaglio: ${(error as Error).message}
+  // `.trimEnd(),
+  //         // { cause: error },
+  //       )
+  //     }
+  //   })
 
-    for (const thunk of pipeline) {
-      try {
-        thunk.execute()
-      } catch (error) {
-        throw new Error(
-          `
-Errore durante l'esecuzione del comando: ${thunk.type} at path '${thunk.path}'
-Sorgente: ${thunk.sourceString}
-Dettaglio: ${(error as Error).message}
-`.trimEnd(),
-          // { cause: error },
-        )
-      }
-    }
-  }
   return {
     compile: {
       result: compileQueryResult,
@@ -106,4 +103,47 @@ Dettaglio: ${(error as Error).message}
       before,
     },
   }
+}
+
+function processSelectBlock({
+  selectBlock,
+  overObj,
+  engine,
+}: {
+  selectBlock: SelectBlock
+  engine: CommandEngine
+  overObj: Obj
+}): Obj {
+  const overArray = get(overObj, selectBlock.select.path, [] as _any[])
+  if (!Array.isArray(overArray)) {
+    throw new Error(
+      `
+DEBUG:
+Non posso processSelectBlock: at path '${selectBlock.select.path} trovato ${typeof overArray}'
+`.trimEnd(),
+      // { cause: error },
+    )
+  }
+  const modArray = overArray.map((currentOverObj) =>
+    selectBlock.commands.reduce((overObj, command) => {
+      if (command.type === 'SelectBlock') {
+        return processSelectBlock({
+          selectBlock: command,
+          overObj: get<Obj[]>(overObj, command.select.path),
+          engine,
+        })
+      }
+      const targetIds = selectBlock.select.targetIds
+      const objId = idExtractor(selectBlock.select)(overObj)
+      if (!targetIds.includes(objId)) {
+        return overObj
+      }
+      return engine.processCommand({
+        command,
+        overObj,
+      })
+    }, currentOverObj),
+  )
+  console.log(JSON.stringify({ overArray, modArray }, null, 2))
+  return set(overObj, selectBlock.select.path, modArray)
 }
