@@ -33,7 +33,7 @@ export const MonacoSandbox: React.FC = () => {
           <Editor
             height="100%"
             // defaultLanguage=""
-            theme="vs-dark"
+            // theme="vs-dark"
             defaultValue={query}
             onChange={(value) => {
               console.log(value)
