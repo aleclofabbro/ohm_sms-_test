@@ -1,6 +1,6 @@
-import { inspect } from 'util'
-import { execQueryRadashi } from '../radashi-engine'
-import { ModelDescriptor } from '../types'
+import { executeQuery } from '../exec-query'
+import { radashiCommandEngine } from '../radashi-engine'
+import type { ModelDescriptor } from '../types'
 
 // ==========================================
 // TIPI BASE (Strict, no optional, max 2 livelli)
@@ -60,80 +60,95 @@ export type MockModel = {
 // MODEL DESCRIPTOR
 // ==========================================
 const modelDescriptor: ModelDescriptor = {
-  users: {
-    type: 'object',
-    idProp: { name: 'userId' },
-    props: {
-      userId: { type: 'string' },
-      status: { type: 'string' },
-      priority: { type: 'number' },
-      metadata: {
+  type: 'model',
+  properties: {
+    users: {
+      type: 'array',
+      items: {
         type: 'object',
-        props: {
-          source: { type: 'string' },
-          verified: { type: 'boolean' },
-        },
-      },
-    },
-  },
-  systems: {
-    type: 'object',
-    idProp: { name: 'sysId' },
-    props: {
-      sysId: { type: 'number' },
-      config: {
-        type: 'object',
-        props: {
-          timeout: { type: 'number' },
-        },
-      },
-      setup_mode: { type: 'boolean' },
-    },
-  },
-  organizations: {
-    type: 'object',
-    idProp: { name: 'orgId' },
-    props: {
-      orgId: { type: 'string' },
-      departments: {
-        type: 'array',
-        elemDescriptor: {
-          type: 'object',
-          idProp: { name: 'depId' },
-          props: {
-            depId: { type: 'number' },
-            name: { type: 'string' },
-            budget: { type: 'number' },
-            active: { type: 'boolean' },
-            employees: {
-              type: 'array',
-              elemDescriptor: {
-                type: 'object',
-                idProp: { name: 'empId' },
-                props: {
-                  empId: { type: 'string' },
-                  role: { type: 'string' },
-                },
-              },
+        idProp: { path: 'userId' },
+        properties: {
+          userId: { type: 'string' },
+          status: { type: 'string' },
+          priority: { type: 'number' },
+          metadata: {
+            type: 'object',
+            properties: {
+              source: { type: 'string' },
+              verified: { type: 'boolean' },
             },
           },
         },
       },
-      tags: {
-        type: 'array',
-        elemDescriptor: { type: 'string' },
+    },
+    systems: {
+      type: 'array',
+      items: {
+        type: 'object',
+        idProp: { path: 'sysId' },
+        properties: {
+          sysId: { type: 'number' },
+          config: {
+            type: 'object',
+            properties: {
+              timeout: { type: 'number' },
+            },
+          },
+          setup_mode: { type: 'boolean' },
+        },
       },
     },
-  },
-  weirdFormats: {
-    type: 'object',
-    idProp: { name: 'wfId' },
-    props: {
-      wfId: { type: 'string' },
-      spacedProp: { type: 'string' },
-      data: {
-        type: 'array',
-        elemDescriptor: { type: 'number' },
+    organizations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        idProp: { path: 'orgId' },
+        properties: {
+          orgId: { type: 'string' },
+          departments: {
+            type: 'array',
+            items: {
+              type: 'object',
+              idProp: { path: 'depId' },
+              properties: {
+                depId: { type: 'number' },
+                name: { type: 'string' },
+                budget: { type: 'number' },
+                active: { type: 'boolean' },
+                employees: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    idProp: { path: 'empId' },
+                    properties: {
+                      empId: { type: 'string' },
+                      role: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          tags: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+      },
+    },
+    weirdFormats: {
+      type: 'array',
+      items: {
+        type: 'object',
+        idProp: { path: 'wfId' },
+        properties: {
+          wfId: { type: 'string' },
+          spacedProp: { type: 'string' },
+          data: {
+            type: 'array',
+            items: { type: 'number' },
+          },
+        },
       },
     },
   },
@@ -183,7 +198,7 @@ donE
 // TEST RUNNER
 // ==========================================
 test('global test', async () => {
-  const execQueryRadashiResult = await execQueryRadashi({
+  const execQueryRadashiResult = await executeQuery({
     io: {
       async requireModel(/* { ids } */) {
         return {
@@ -193,9 +208,9 @@ test('global test', async () => {
     },
     modelDescriptor,
     query,
+    engine: radashiCommandEngine,
   })
-console.log(inspect(execQueryRadashiResult, { depth: 10, colors: true }))
-expect(execQueryRadashiResult.model.after).toEqual(expectedModel)
+  expect(execQueryRadashiResult.model.after).toEqual(expectedModel)
 })
 
 // ==========================================

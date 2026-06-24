@@ -1,137 +1,119 @@
 /* eslint-disable preserve-caught-error */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { last, sift } from 'radashi'
 import grammar from './grammar/grammar.ohm-bundle.js'
-// Puoi usare 'get' di radashi se preferisci semplificare, ma per validare 
-// l'albero dei tipi del descriptor (che ha 'props' ed 'elemDescriptor')
-// una funzione dedicata è più sicura.
-import type {
-  ModelDescriptor,
-  CompileQueryResult,
-  CompileQueryBlock,
-  SelectCommand,
-  ValueMutationCommand,
-  RemoveCommand,
-  Command,
-  EntityIds,
-  _any
-} from './types.js'
+import {
+  isPrimitiveDescriptor,
+  type _any,
+  type ArrayDescriptor,
+  type Command,
+  type CompileQueryResult,
+  type EntityCollectionDescriptor,
+  type Ids,
+  type ModelDescriptor,
+  type RemoveCommand,
+  type SelectBlock,
+  type SelectCommand,
+  type SomeDescriptor,
+  type SetCommand,
+  type UpsertCommand,
+  type AddCommand,
+  type IdProp,
+  idExtractor,
+} from './types'
+type RootStackItem = {
+  descriptor: ModelDescriptor
+}
+
+type EntityStackItem = {
+  entityName: string
+  descriptor: EntityCollectionDescriptor
+}
+
+type ArrayStackItem = {
+  dotPathSegment: string
+  descriptor: ArrayDescriptor
+}
+type StackItemDescriptor = StackItem['descriptor']
+type Stack = [RootStackItem, EntityStackItem?, ...ArrayStackItem[]]
+type StackItem = RootStackItem | EntityStackItem | ArrayStackItem
 
 export function compileQuery(
   query: string,
-  modelDescriptor: ModelDescriptor
+  modelDescriptor: ModelDescriptor,
 ): CompileQueryResult {
-  
   const matchResult = grammar.match(query)
   if (matchResult.failed()) {
     throw new Error(`Syntax Error:\n${matchResult.message}`)
   }
 
-  // =========================================================
-  // HELPER: Validazione profonda sul ModelDescriptor
-  // =========================================================
-  function validateDescriptorPath(absolutePath: string) {
-    const parts = absolutePath.split('.')
-    const root = parts[0]
-    
-    if (!modelDescriptor[root]) {
-      throw new Error(`Semantic Error: L'entità root '${root}' non esiste nel ModelDescriptor.`)
-    }
-    
-    // Navighiamo il descriptor per validare la dot-notation e i nested array
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let currentDesc: any = modelDescriptor[root]
-    
-    for (let i = 1; i < parts.length; i++) {
-      const prop = parts[i]
-      
-      if (currentDesc.type === 'object' && currentDesc.props) {
-        currentDesc = currentDesc.props[prop]
-      } else if (currentDesc.type === 'array' && currentDesc.elemDescriptor) {
-        if (currentDesc.elemDescriptor.type === 'object') {
-          currentDesc = currentDesc.elemDescriptor.props[prop]
-        } else {
-          throw new Error(`Semantic Error: Impossibile navigare '${prop}', l'array '${parts[i-1]}' contiene primitive.`)
-        }
-      } else {
-        throw new Error(`Semantic Error: Impossibile navigare '${prop}' da '${parts[i-1]}'.`)
-      }
-      
-      if (!currentDesc) {
-        throw new Error(`Semantic Error: La proprietà '${prop}' nel path '${absolutePath}' non esiste nel descrittore.`)
-      }
-    }
-  }
-
   const semantics = grammar.createSemantics()
-  
-  // =========================================================
-  // STATE MANAGEMENT: Stack dei path per supportare l'annidamento
-  // =========================================================
-  const pathStack: string[] = []
+
+  const rootStackItem: RootStackItem = { descriptor: modelDescriptor }
+  const stack: Stack = [rootStackItem]
 
   semantics.addOperation('toAST()', {
-    Program(statementSeq) {
-      const nodes = statementSeq.toAST() as unknown[]
-      // Estraiamo solo i blocchi root (livello 0)
-      const blocks = nodes
-        .flat()
-        .filter((node: _any) => node && node.select) as CompileQueryBlock[]
-      
-      return { queries: blocks } satisfies CompileQueryResult
+    _iter(...children) {
+      return children.map((child) => child.toAST())
     },
 
-    StatementSequence(statements) {
-      return statements.children.map((child) => child.toAST())
+    Program(selectBlockSequence) {
+      const selectBlocks = sift(
+        selectBlockSequence.toAST() as (SelectBlock | null | undefined)[],
+      )
+      return { selectBlocks } satisfies CompileQueryResult
     },
 
     Statement(stmt) {
       return stmt.toAST()
     },
 
-    SelectBlock(_kwSelect, propPath, _lParen, idList, _rParen, _eol, stmtSeq, _kwDone, _eol2) {
+    SelectBlock(
+      _kwSelect,
+      propPath,
+      _lParen,
+      idList,
+      _rParen,
+      _eol,
+      stmtSeq,
+      _kwDone,
+      _eol2,
+    ) {
       const localTarget = propPath.sourceString
-      
-      // Costruiamo il path assoluto guardando il padre nello stack
-      const parentPath = pathStack.length > 0 ? pathStack[pathStack.length - 1] : ''
-      const absoluteTarget = parentPath ? `${parentPath}.${localTarget}` : localTarget
-
-      // Validazione contestuale (Aware)
-      validateDescriptorPath(absoluteTarget)
-
-      // "Push" del contesto corrente prima di valutare i figli
-      pathStack.push(absoluteTarget)
-      
-      const commands = stmtSeq.toAST().flat().filter(Boolean) as Command[]
-      
-      // "Pop" in risalita
-      pathStack.pop()
+      // console.log(inspect([...stack], { colors: true, depth: 5 }))
+      pushStack(localTarget)
+      const commands = sift(stmtSeq.toAST() as (Command | null | undefined)[])
 
       const select: SelectCommand = {
         type: 'SELECT',
-        target: absoluteTarget, // Es: diventerà "organizations.departments"
-        targetIds: idList.toAST() as EntityIds,
-        sourceString: this.sourceString
+        path: localTarget,
+        targetIds: idList.toAST() as Ids,
+        sourceString: this.sourceString,
+        idProp: idProp(),
+        isList: true,
+        isTargetedList: true,
       }
 
-      // Ritorniamo il blocco. Se questo SELECT è annidato, finirà dentro 
-      // l'array `commands` del parent SelectBlock.
+      popStack()
+
       return {
-        type: 'CompileQueryBlock',
+        type: 'SelectBlock',
         query: this.sourceString,
         select,
         commands,
-      } satisfies CompileQueryBlock 
+      } satisfies SelectBlock
     },
 
-    // --- Istruzioni di Mutazione ---
-
     SetStmt(_kw, propPath, _eq, jsonVal) {
+      const localTarget = propPath.sourceString
       return {
         type: 'SET',
-        path: propPath.sourceString, // Il path per radashi resta relativo al target del blocco
+        path: localTarget,
         value: jsonVal.toAST(),
-        sourceString: this.sourceString
-      } satisfies ValueMutationCommand
+        sourceString: this.sourceString,
+        isList: false,
+        isTargetedList: false,
+      } satisfies SetCommand
     },
 
     AddStmt(_kw, propPath, _eq, jsonVal) {
@@ -139,29 +121,45 @@ export function compileQuery(
         type: 'ADD',
         path: propPath.sourceString,
         value: jsonVal.toAST(),
-        sourceString: this.sourceString
-      } satisfies ValueMutationCommand
+        sourceString: this.sourceString,
+        isList: true,
+        isTargetedList: false,
+      } satisfies AddCommand
     },
 
     UpsertStmt(_kw, propPath, _eq, jsonVal) {
+      const upsertIdProp = idProp(propPath.sourceString)
+      const extractId = idExtractor({
+        type: 'UPSERT',
+        isList: true,
+        idProp: upsertIdProp,
+      })
+      const value = jsonVal.toAST()
+      const targetIds = value.map(extractId)
+      // console.log({ value, targetIds })
       return {
         type: 'UPSERT',
         path: propPath.sourceString,
-        value: jsonVal.toAST(),
-        sourceString: this.sourceString
-      } satisfies ValueMutationCommand
+        value,
+        sourceString: this.sourceString,
+        isList: true,
+        isTargetedList: true,
+        idProp: upsertIdProp,
+        targetIds,
+      } satisfies UpsertCommand
     },
 
     RemoveStmt(_kw, propPath, _lParen, idList, _rParen, _eol) {
       return {
         type: 'REMOVE',
         path: propPath.sourceString,
-        targetIds: idList.toAST() as EntityIds,
-        sourceString: this.sourceString
+        sourceString: this.sourceString,
+        isList: true,
+        targetIds: idList.toAST() as Ids,
+        idProp: idProp(propPath.sourceString),
+        isTargetedList: true,
       } satisfies RemoveCommand
     },
-
-    // --- Regole Lessicali ---
 
     IdList(ids) {
       return ids.asIteration().children.map((c) => c.toAST())
@@ -175,23 +173,117 @@ export function compileQuery(
       return chars.sourceString
     },
 
-    IntId(_sign, digits) {
+    IntId(_sign, _digits) {
       return parseInt(this.sourceString, 10)
     },
 
-    jsonValue(chars) {
+    jsonValue(_chars) {
       const raw = this.sourceString.replace(/\/\/.*$/, '').trim()
       try {
         return JSON.parse(raw)
       } catch (error) {
-        throw new Error(`JSON Parse Error nella query:\n'${raw}'\nDettaglio: ${(error as Error).message}`)
+        throw new Error(
+          `JSON Parse Error nella query:\n'${raw}'\nDettaglio: ${(error as Error).message}`,
+        )
       }
     },
 
     nl(_cr, _lf) {
       return null
-    }
+    },
   })
 
   return semantics(matchResult).toAST() as CompileQueryResult
+
+  function idProp(dotPath = ''): IdProp | undefined {
+    const currentStack = stack_current()
+    const targetDescriptor = getTargetDescriptor(
+      currentStack.descriptor,
+      dotPath,
+    )
+    return targetDescriptor.type === 'array'
+      ? targetDescriptor.items.type === 'object'
+        ? targetDescriptor.items.idProp
+        : undefined
+      : undefined
+  }
+  function stack_current() {
+    return last(stack)!
+  }
+
+  function getTargetDescriptor(
+    descriptor: SomeDescriptor,
+    dotPath: string,
+  ): SomeDescriptor {
+    const [prop, ...restPath] = dotPath.split('.')
+    if (!prop) {
+      return descriptor
+    }
+    if (isPrimitiveDescriptor(descriptor)) {
+      // console.log(inspect({ dotPath, descriptor }, { colors: true, depth: 10 }))
+      throw new Error(`cannot getDescriptor ${dotPath} in ${descriptor.type}`, {
+        cause: { current: descriptor, dotPath },
+      })
+    }
+
+    const restDotPath = restPath.join('.')
+    const nextDesc = isPrimitiveDescriptor(descriptor)
+      ? getTargetDescriptor(descriptor, restDotPath)
+      : descriptor.type === 'object' || descriptor.type === 'model'
+        ? getTargetDescriptor(descriptor.properties[prop], restDotPath)
+        : descriptor.type === 'array'
+          ? getTargetDescriptor(descriptor.items, prop)
+          : (() => {
+              //@ts-expect-error : exhausted descriptor is never
+              throw new Error(`unexpected descriptor type ${descriptor.type}`)
+            })()
+    return nextDesc
+  }
+  function pushStack(dotPath: string) {
+    const inDescriptor = stack_current().descriptor
+    const selectionContextDescriptor = selectPath(inDescriptor, dotPath)
+    const newStackItem: StackItem = {
+      descriptor: selectionContextDescriptor,
+      dotPathSegment: dotPath,
+    }
+    stack.push(newStackItem)
+    return newStackItem
+  }
+  function popStack() {
+    if (stack.length < 2) {
+      throw new Error(`cannot popStack with stack length ${stack.length}`, {
+        cause: { stack },
+      })
+    }
+    const prevStackItem = stack.pop()
+    return prevStackItem!
+  }
+  function selectPath(
+    inDescriptor: StackItemDescriptor,
+    dotPath: string,
+  ): EntityCollectionDescriptor | ArrayDescriptor {
+    const targetDescriptor = getTargetDescriptor(inDescriptor, dotPath)
+    // console.log(
+    //   inspect(
+    //     { inDescriptor, dotPath, targetDescriptor },
+    //     { colors: true, depth: 5 },
+    //   ),
+    // )
+    if (targetDescriptor.type !== 'array') {
+      // console.log(
+      //   inspect(
+      //     { inDescriptor, dotPath, targetDescriptor },
+      //     { colors: true, depth: 10 },
+      //   ),
+      // )
+      throw new Error(
+        `cannot selectionStack ${dotPath} in ${inDescriptor.type}: found ${targetDescriptor.type}`,
+        {
+          cause: { inDescriptor, dotPath, targetDescriptor },
+        },
+      )
+    }
+
+    return targetDescriptor
+  }
 }

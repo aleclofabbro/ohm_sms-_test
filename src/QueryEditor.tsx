@@ -1,4 +1,4 @@
-import Editor, { useMonaco, type OnMount } from '@monaco-editor/react' // Richiede npm install @monaco-editor/react
+import Editor, { type OnMount } from '@monaco-editor/react' // Richiede npm install @monaco-editor/react
 import React, { useState } from 'react'
 import { useOhmCompiler } from './SandboxContexts'
 
@@ -41,6 +41,13 @@ export const QueryEditor: React.FC = () => {
     }
   }
   const handleEditorDidMount: OnMount = (editor, monaco) => {
+    console.log(
+      'handleEditorDidMount:',
+      monaco?.editor === editor,
+      monaco,
+      editor,
+    )
+
     editor.addAction({
       id: 'submit-code',
       label: 'Submit Query',
@@ -51,6 +58,7 @@ export const QueryEditor: React.FC = () => {
       },
     })
   }
+
   return (
     <div className="panel">
       <div
@@ -66,7 +74,7 @@ export const QueryEditor: React.FC = () => {
         <Editor
           height="100%"
           // defaultLanguage="sql"
-          theme="vs-dark"
+          // theme="vs-dark"
           value={query}
           onChange={(query) => setQuery(query ?? '')}
           options={{ minimap: { enabled: false }, fontSize: 14 }}

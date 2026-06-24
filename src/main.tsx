@@ -1,11 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import SandboxApp from './SandboxApp.js'
-import { SmsQLIOContext } from './IOContexts.js'
 import MonacoSandbox from './sb/MonacoSandbox.js'
 import { map } from 'radashi'
+import { IOContext, type IOContextType } from './SandboxContexts.js'
 
-const smsQLIOContext: SmsQLIOContext = {
+const ioContext: IOContextType = {
   io: {
     async requireModel({ requiredModel }) {
       const model = Object.fromEntries(
@@ -30,9 +30,9 @@ const smsQLIOContext: SmsQLIOContext = {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <SmsQLIOContext value={smsQLIOContext}>
+    <IOContext value={ioContext}>
       {/* <App /> */}
       {location.pathname === '/m' ? <MonacoSandbox /> : <SandboxApp />}
-    </SmsQLIOContext>
+    </IOContext>
   </StrictMode>,
 )

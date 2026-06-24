@@ -1,6 +1,7 @@
 CustomQueryLanguage {
   // L'entry point del programma accetta una sequenza di istruzioni o righe vuote
-  Program = StatementSequence
+  Program = ProgramSequence
+  ProgramSequence = (SelectBlock | nl)*
   
   StatementSequence = (Statement | nl)*
   
@@ -10,21 +11,18 @@ CustomQueryLanguage {
             | UpsertStmt
             | RemoveStmt
 
-  // Il blocco SELECT richiede il comando, il target, la lista di ID e garantisce
-  // tramite lookahead (&eol) che non ci siano altre istruzioni sulla stessa riga.
+  // Il blocco SELECT:  il lookahed (&eol) per impedire altre  istruzioni sulla stessa riga.
   // Contiene in modo ricorsivo una StatementSequence e si chiude con DONE.
   SelectBlock = KwSelect PropPath "(" IdList ")" &eol 
                 StatementSequence 
                 KwDone &eol
   
-  // Istruzioni di mutazione. Termineranno in modo naturale a fine riga 
-  // grazie al comportamento della regola jsonValue.
+  // Mtazioni termina  a fine riga `jsonValue`
   SetStmt    = KwSet PropPath "=" jsonValue
   AddStmt    = KwAdd PropPath "=" jsonValue
   UpsertStmt = KwUpsert PropPath "=" jsonValue
   
-  // REMOVE usa una sintassi posizionale come SELECT, quindi applichiamo 
-  // il lookahead per assicurarci che sia l'unica istruzione sulla riga.
+  // REMOVE : sintassi posizionale come SELECT (con lookahead &eol).
   RemoveStmt = KwRemove PropPath "(" IdList ")" &eol
 
   // Lista comma-separated di ID
@@ -35,14 +33,13 @@ CustomQueryLanguage {
   StringId = "\"" (~"\"" any)* "\""
   IntId = "-"? digit+
 
-  // Supporto alla Dot-notation per le proprietà
+  // dot-notation per le proprieta' target
   PropPath = PropName ("." PropName)*
   
-  // Identificatori sicuri compatibili con chiavi JS (es. metadata_2)
+  // Identificatori sicuri compatibili con chiavi oggettio JS
   PropName = ("_" | letter) identifierPart*
 
-  // STUB JSON: Regola lessicale (inizia con minuscola) che cattura tutto 
-  // fino alla fine della riga. Essendo lessicale, l'assorbimento è grezzo.
+  // STUB JSON: regola lessicale temporanea che cattura tutto fino alla fine della riga.
   jsonValue = (~eol any)+
 
   KwSelect = caseInsensitive<"SELECT">
@@ -56,7 +53,7 @@ CustomQueryLanguage {
 
   // OVERRIDE DELLE REGOLE DI SPAZIATURA
   // Sovrascriviamo 'space' per ignorare tab, spazi e commenti, 
-  // escludendo categoricamente i ritorni a capo (nl), che diventano strutturali.
+  // __escludendo categoricamente i ritorni a capo (nl), che diventano strutturali.__
   space := " " | "\t" | comment
   comment = multiLineComment | singleLineComment
   multiLineComment = "/*" (~"*/" any)* "*/"

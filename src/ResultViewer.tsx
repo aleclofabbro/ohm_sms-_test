@@ -1,5 +1,5 @@
 import { DiffEditor } from '@monaco-editor/react'
-import React, { useReducer } from 'react'
+import React, { useMemo, useReducer } from 'react'
 import { VirtualDiffViewer } from 'virtual-react-json-diff'
 import { useResult } from './SandboxContexts'
 
@@ -8,24 +8,32 @@ export const ResultViewer: React.FC = () => {
   const [viewType, toggleViewType] = useReducer(
     (prev) =>
       prev === 'virtualDiffViewer' ? 'monacoDiffEditor' : 'virtualDiffViewer',
-    'monacoDiffEditor',
+    'virtualDiffViewer',
   )
 
+  const results = useMemo(
+    () =>
+      queryResult
+        ? {
+            before: JSON.stringify(queryResult.before, null, 2),
+            after: JSON.stringify(queryResult.after, null, 2),
+          }
+        : { after: '', before: '' },
+    [queryResult],
+  )
   return (
     <div className="panel">
       <div className="panel-header">
-        State & Diff Viewer{' - '}
+        Risultato Query (Diff) using:
         <button
           style={{
             background: 'transparent',
             color: 'inherit',
+            cursor: 'pointer',
           }}
           onClick={toggleViewType}
         >
-          set{' '}
-          {viewType === 'virtualDiffViewer'
-            ? 'monacoDiffEditor'
-            : 'virtualDiffViewer'}
+          {viewType}
         </button>
       </div>
       <div
@@ -39,10 +47,6 @@ export const ResultViewer: React.FC = () => {
       >
         {queryResult && (
           <>
-            <h4 style={{ margin: '0 0 12px 0', color: '#4CAF50' }}>
-              Risultato Query (Diff): {viewType}
-            </h4>
-
             <div
               style={{
                 flexGrow: 1,
@@ -67,9 +71,9 @@ export const ResultViewer: React.FC = () => {
                   <DiffEditor
                     height="100%"
                     language="json"
-                    theme="vs-dark"
-                    original={JSON.stringify(queryResult.before, null, 2)}
-                    modified={JSON.stringify(queryResult.after, null, 2)}
+                    // theme="vs-dark"
+                    original={results.before}
+                    modified={results.after}
                     options={{
                       readOnly: true,
                       minimap: { enabled: false },
@@ -80,8 +84,8 @@ export const ResultViewer: React.FC = () => {
                   />
                 ) : (
                   <VirtualDiffViewer
-                    oldValue={queryResult.before}
-                    newValue={queryResult.after}
+                    oldValue={JSON.parse(results.before)}
+                    newValue={JSON.parse(results.after)}
                     height={600}
                     showLineCount
                     showObjectCountStats

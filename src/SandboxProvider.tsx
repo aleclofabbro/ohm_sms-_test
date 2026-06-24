@@ -1,14 +1,17 @@
 import React, { type ReactNode, useState } from 'react'
-import { useSmsQLIO } from './IOContexts'
 import type { Model } from './ohm/types'
 import {
   type CompilationResult,
   type DiffResult,
   OhmCompilerContext,
-  ResultContext
+  type OhmCompilerContextType,
+  ResultContext,
+  useSmsQLIO,
 } from './SandboxContexts'
 import { smsModelDescriptor } from './sms-model-descriptor'
-import { execQueryRadashi } from './ohm/radashi-engine'
+import { executeQuery } from './ohm/exec-query'
+import { radashiCommandEngine } from './ohm/radashi-engine'
+import { tryit } from 'radashi'
 
 export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -17,36 +20,37 @@ export const SandboxProvider: React.FC<{ children: ReactNode }> = ({
   const [queryResult, setQueryResult] = useState<DiffResult | null>(null)
   const smsQLctx = useSmsQLIO()
 
-  const compileAndExecute = (query: string): Promise<CompilationResult> => {
-    console.log('Esecuzione query in corso...', query)
-    return execQueryRadashi({
+  const compileAndExecute: OhmCompilerContextType['compileAndExecute'] = async (
+    query: string,
+  ): Promise<CompilationResult> => {
+    const [error, result] = await tryit(executeQuery)({
       query,
       io: smsQLctx.io,
       modelDescriptor: smsModelDescriptor,
+      engine: radashiCommandEngine,
     })
-      .then<CompilationResult>((qresult) => {
-        setModel(qresult.model.before)
-        setQueryResult({
-          after: qresult.model.after,
-          before: qresult.model.before,
-        })
-        return { success: true }
-      })
-      .catch<CompilationResult>((e) => {
-        setModel({})
-        setQueryResult(null)
-        // throw e
-        return { success: false, error: e }
-      })
+
+    if (error) {
+      setModel({})
+      setQueryResult(null)
+      // throw error ?
+      return { success: false, error }
+    }
+
+    setModel(result.model.before)
+    setQueryResult({
+      after: result.model.after,
+      before: result.model.before,
+    })
+
+    return { success: true, result }
   }
 
   return (
-    <OhmCompilerContext.Provider value={{ compileAndExecute }}>
-      <ResultContext.Provider
-        value={{ model, setModel, queryResult, setQueryResult }}
-      >
+    <OhmCompilerContext value={{ compileAndExecute }}>
+      <ResultContext value={{ model, setModel, queryResult }}>
         {children}
-      </ResultContext.Provider>
-    </OhmCompilerContext.Provider>
+      </ResultContext>
+    </OhmCompilerContext>
   )
 }

@@ -6,18 +6,19 @@ export const MonacoSandbox: React.FC = () => {
   const [query, setQuery] = useState('')
   const handleEditorDidMount: OnMount = ( editor, monaco ) => {
     monaco
+    editor
   }
     const monaco = useMonaco();
 
   useEffect(() => {
     // do conditional chaining
-    monaco?.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+    //monaco?.languages.typescript.javascriptDefaults.setEagerModelSync(true);
     // or make sure that it exists by other ways
     if (monaco) {
-      monaco.editor.
-      console.log('here is the monaco instance:', monaco);
+      //  monaco.editor
+      console.log('monaco instance:', monaco)
     }
-  }, [monaco]);
+  }, [monaco])
   return (
     <div className="sandbox-container">
       <header className="sandbox-header"></header>
@@ -32,7 +33,7 @@ export const MonacoSandbox: React.FC = () => {
           <Editor
             height="100%"
             // defaultLanguage=""
-            theme="vs-dark"
+            // theme="vs-dark"
             defaultValue={query}
             onChange={(value) => {
               console.log(value)

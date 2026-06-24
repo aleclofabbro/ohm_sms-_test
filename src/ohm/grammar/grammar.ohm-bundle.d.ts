@@ -13,6 +13,7 @@ import {
 
 export interface CustomQueryLanguageActionDict<T> extends BaseActionDict<T> {
   Program?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  ProgramSequence?: (this: NonterminalNode, arg0: IterationNode) => T;
   StatementSequence?: (this: NonterminalNode, arg0: IterationNode) => T;
   Statement?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   SelectBlock?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode, arg5: NonterminalNode, arg6: NonterminalNode, arg7: NonterminalNode, arg8: NonterminalNode) => T;
